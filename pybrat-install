@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+if [ -f "./scripts/pybrat_install.py" ]; then 
+    /usr/bin/python2 "${PWD}/scripts/pybrat_install.py" "$@"
+else
+    echo "Installation package not found."
+fi

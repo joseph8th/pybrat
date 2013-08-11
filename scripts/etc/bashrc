@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+
+# Pybrat bashrc settings
+
+PYBRAT_PATH_ROOT="$PYBRAT_CONFD"
+if [ -z "${PYBRAT_PATH_ROOT}" ] ; then
+    PYBRAT_PATH_ROOT="$HOME/.pybrat"
+fi
+
+PYBRAT_WORK_DIR="$PYBRAT_WORKD"
+PYBRAT_VENV_ACTIVATE="$PYBRAT_VENV"
+PYBRAT_PYTHON_USE="$PYBRAT_PYTHON"
+
+PYBRAT_HOOKS_DIR="$PYBRAT_PROJ_HOOKSD"
+
+PYBRAT_PS1_SWAP="$PS1"
+
+# Pybrat bashrc functions
+
+__pybrat_set_default()
+{
+    PATH_PYBRAT="$PYBRAT_PATH_ROOT/bin"
+}
+
+__pybrat_set_path()
+{
+    if [ -z "${PYBRAT_PATHS}" ]; then 
+        PATH_WITHOUT_PYBRAT=$(printf "$PATH" | awk -v RS=: -v ORS=: "/${PYBRAT_PATH_ROOT//\//\/}/ {next} {print}" | sed -e 's#:$##') 
+        export PATH=$PATH_PYBRAT:$PATH_WITHOUT_PYBRAT
+    else
+        export PATH=$PYBRAT_PATHS
+    fi
+}
+
+__pybrat_set_python_path()
+{
+    if [ ! -z "$PYBRAT_PYTHONPATH" ]; then
+        export PYTHONPATH=$PYBRAT_PYTHONPATH
+    fi
+}
+
+__pybrat_chdir_workd()
+{
+    if [ ! -z "${PYBRAT_WORK_DIR}" ]; then
+        cd $PYBRAT_WORK_DIR
+    fi      
+}
+
+__pybrat_toggle_active_prompt()
+{
+    tmp_ps1="$PS1"
+    PS1="$PYBRAT_PS1_SWAP"
+    PYBRAT_PS1_SWAP="$tmp_ps1"
+}
+
+__pybrat_set_env_active()
+{
+    green="\[\033[01;32m\]"
+    gray="\[\033[0;37m\]"
+
+    old_ps1=$(echo -e "${PS1}" | tr '\n' ' ')
+    PS1="\n${gray}[${green}${PYBRAT_PYTHON_USE}${gray}] ${old_ps1}"
+    PYBRAT_PS1_SWAP="\n${gray}[${green}*${gray}]${old_ps1}"
+    alias deactivate='__pybrat_predeactivate; exit'
+    alias home='cd ${PYBRAT_WORK_DIR}'
+    alias prompt=__pybrat_toggle_active_prompt
+}
+
+__pybrat_preactivate()
+{
+    if [ -f "${PYBRAT_HOOKS_DIR}/preactivate" ]; then
+        ${PYBRAT_HOOKS_DIR}/preactivate
+    fi
+}
+
+__pybrat_postactivate()
+{
+    if [ -f "${PYBRAT_HOOKS_DIR}/postactivate" ]; then
+        ${PYBRAT_HOOKS_DIR}/postactivate
+    fi
+}
+
+__pybrat_predeactivate()
+{
+    if [ -f "${PYBRAT_HOOKS_DIR}/predeactivate" ]; then
+        ${PYBRAT_HOOKS_DIR}/predeactivate
+    fi
+}
+
+__pybrat_activate_venv()
+{
+    if [ ! -z "${PYBRAT_VENV_ACTIVATE}" ]; then
+        __pybrat_preactivate 
+       pythonbrew venv use $PYBRAT_VENV_ACTIVATE -p $PYBRAT_PYTHON_USE
+        __pybrat_set_env_active
+        __pybrat_postactivate
+    elif [ ! -z "${PYBRAT_PYTHON_USE}" ]; then
+        pythonbrew use $PYBRAT_PYTHON_USE
+        __pybrat_set_env_active
+    fi
+}
+
+# Pybrat bashrc main
+__pybrat_set_default
+__pybrat_set_path
+__pybrat_set_python_path
+__pybrat_chdir_workd
+__pybrat_activate_venv
