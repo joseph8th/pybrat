@@ -1,6 +1,7 @@
 from os import environ
 from os.path import join, exists, basename
-from pybrat.util import get_project_list, pv_run_processes, pv_check_subd
+from pybrat.util import get_project_list, pv_run_processes, pv_check_subd, \
+    print_err
 from pybrat.define import PYBRAT_PYBREW_PYD, PYBRAT_PROG
 from pybrat.subcommand import Subcommand
 

@@ -51,7 +51,7 @@ PYBRAT_MAINF = "pybrat_main.py"
 PYBRAT_PATHS = [PYBRAT_CONFD, PYBRAT_MAIND, PYBRAT_PROGD, PYBRAT_SUBCMDD, 
                 PYBRAT_BIND, PYBRAT_ETCD, PYBRAT_HOOKSD, PYBRAT_PROJD]
 
-# Build pybrat's command script filepath and contents
+# Build pybrat's command script filepath, contents, and default exec path
 PYBRAT_CMD = join(PYBRAT_BIND, PYBRAT_PROG)
 PYBRAT_CMD_STR = "#!/usr/bin/env bash\n" + \
     "/usr/bin/python2 \"{0}/{1}\" \"$@\"\n".format(PYBRAT_MAIND, PYBRAT_MAINF)

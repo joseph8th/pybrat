@@ -3,9 +3,9 @@ from shutil import copy2, rmtree
 from os.path import isfile, join, exists, basename, splitext
 
 from pybrat.util import pv_mkdirs, pv_mkfile
-from pybrat.define import PYBRAT_PATHS, PYBRAT_CONFD, PYBRAT_PROGD, PYBRAT_ETCD, \
-PYBRAT_SUBCMDD, PYBRAT_PROJD, PYBRAT_MAIND, PYBRAT_MAINF, PYBRAT_CMD, PYBRAT_CMD_STR, \
-PYBRAT_HOOKSD
+from pybrat.define import PYBRAT_PATHS, PYBRAT_CONFD, PYBRAT_PROGD, \
+    PYBRAT_ETCD, PYBRAT_SUBCMDD, PYBRAT_PROJD, PYBRAT_MAIND, PYBRAT_MAINF, \
+    PYBRAT_CMD, PYBRAT_CMD_STR, PYBRAT_HOOKSD
 
 
 def _install_pybrat(install_path):
@@ -69,13 +69,14 @@ def _install_pybrat(install_path):
                 copy2(f['cpfrom'], f['cpto'])
                 print "Copied:\t" + f['cpfrom'] + "\n\t==> " + f['cpto']
 
-    # make command script
+    # make command script and link into user path
     if not isfile(PYBRAT_CMD):
         print "Installing Pybrat command at:"
         print "\t{}".format(PYBRAT_CMD)
+
         if not pv_mkfile(PYBRAT_CMD, 0755, PYBRAT_CMD_STR):
             return False
-    
+
     # all went well so print success screen
     print "\n----------------------------------------------------------\n" + \
         "*** Pybrat Installation and Configuration is Complete. ***\n" + \
@@ -85,6 +86,7 @@ def _install_pybrat(install_path):
         "[[ -s \"$HOME/.pybrat/etc/bashrc\" ]] && " + \
         "source \"$HOME/.pybrat/etc/bashrc\"\n" 
     return True
+
 
 def installPybrat(install_path, args):
     """
