@@ -1,17 +1,26 @@
 import os
 from os.path import join, exists
 
+
+
 def get_pybrew_root():
     """
     Locate pythonbrew's root directory
     """
+
+    pb_root = None
     envpaths = os.environ['PATH'].split(':')
+
     for p in envpaths:
         if ".pythonbrew/bin" in p:
             pb_root, pb_bin = os.path.split(p) 
+
     if pb_root:
         return pb_root
+
     return None
+
+
 
 def get_vwrap_root():
     """
