@@ -8,7 +8,6 @@ def get_pybrew_root():
     Locate pythonbrew's root directory
     """
 
-    pb_root = None
     envpaths = os.environ['PATH'].split(':')
 
     for p in envpaths:

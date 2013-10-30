@@ -3,9 +3,28 @@ from shutil import copy2, rmtree
 from os.path import isfile, join, exists, basename, splitext
 
 from pybrat.util import pv_mkdirs, pv_mkfile
-from pybrat.define import PYBRAT_PATHS, PYBRAT_CONFD, PYBRAT_PROGD, \
+
+
+
+def _prereq_check:
+    """ Check for dependencies. """
+
+    envpaths = os.environ['PATH'].split(':')
+    for p in envpaths:
+
+        if not '.pythonbrew/bin' in p:
+            return False
+
+        pb_root, pb_bin = os.path.split(p)            
+        if not pb_root:
+            return False
+
+    from pybrat.define import PYBRAT_PATHS, PYBRAT_CONFD, PYBRAT_PROGD, \
     PYBRAT_ETCD, PYBRAT_SUBCMDD, PYBRAT_PROJD, PYBRAT_MAIND, PYBRAT_MAINF, \
     PYBRAT_CMD, PYBRAT_CMD_STR, PYBRAT_HOOKSD
+
+    return True
+
 
 
 def _install_pybrat(install_path):
@@ -88,23 +107,28 @@ def _install_pybrat(install_path):
     return True
 
 
+
 def installPybrat(install_path, args):
     """
     Create Pybrat user directories and copy scripts.
     """
+
     # check for default install action
     if True not in vars(args).values():
         args.install = True
 
     # if reinstall or uninstall then delete PYBRAT_CONFD
     if not args.install:
+
         if not exists(PYBRAT_CONFD):
             print "Uninstallation Error: Pybrat not installed."
             return False
         print "Uninstalling Pybrat installation..."
+
         for p in PYBRAT_PATHS:
             if p not in [PYBRAT_PROJD,]:
                 rmtree(p, ignore_errors=True)
+
         if args.uninstall:
             return True
         else:
@@ -112,6 +136,10 @@ def installPybrat(install_path, args):
 
     # do a regular install
     if args.install:
+
+        if not _prereq_check():
+            print "\Installation Error: Dependencies not installed."
+
         if not exists(PYBRAT_CONFD):
             print "\nInstalling Pybrat...\n"
             return _install_pybrat(install_path)
