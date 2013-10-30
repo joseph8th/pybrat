@@ -5,3 +5,7 @@ if [ -f "./scripts/pybrat_install.py" ]; then
 else
     echo "Installation package not found."
 fi
+
+if [ ! -f "~/pythonbrew/bin/pythonbrew" ]; then
+    echo "Pythonbrew not installed."
+fi

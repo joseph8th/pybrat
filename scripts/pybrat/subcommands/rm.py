@@ -1,5 +1,5 @@
 from os import readlink, remove
-from os.path import join, exists
+from os.path import join, exists, lexists
 from shutil import rmtree
 from pybrat.util import get_project_list, get_input_bool, pv_rmvenv, pb_rmvenv
 from pybrat.define import PYBRAT_PROJD, PYBRAT_PROG
@@ -7,7 +7,7 @@ from pybrat.subcommand import Subcommand
 
 class RmProject(Subcommand):
     name = "rm"
-    description = "Remove pybrat project (leaves your project directory alone)."
+    description = "Remove pybrat project (doesn't touch your files)."
     help = "remove given project and/or virtualenv(s)"
 
     def __init__(self):
@@ -39,17 +39,21 @@ class RmProject(Subcommand):
                             print "Remove Error: {} was not deleted".format(args.project)
                             return False
                         return True
+
             # venv not in any pybrat project so no worries...
             if not pb_rmvenv(vname):
                 print "Remove Error: {} was not deleted".format(args.project)
                 return False
             return True
 
+
         # still here? then delete the rest of the pybrat project...
         pv_projd = join(PYBRAT_PROJD, args.project)
-        if not exists(pv_projd):
-            print "Remove Error: {} does not exist".format(pv_projd)
+
+        if not lexists(pv_projd):
+            print "Warning: {} does not exist".format(pv_projd)
             return False
+
         print "==> Removing project '{}'...".format(args.project)
 
         # if 'pythonbrew venv delete project'...?
@@ -61,11 +65,12 @@ class RmProject(Subcommand):
 
         # remove .pybrat dir in user's project dir
         pv_subd = join(readlink(pv_projd), ".{}".format(PYBRAT_PROG))
-        if not exists(pv_subd):
-            print "Remove Error: {} does not exist.".format(pv_subd)
-            return False
-        rmtree(pv_subd, ignore_errors=True)
-        print "Removed .pybrat subdirectory {}".format(pv_subd)
+
+        if not lexists(pv_subd):
+            print "Warning: {} does not exist.".format(pv_subd)
+        else:
+            rmtree(pv_subd, ignore_errors=True)
+            print "Removed .pybrat subdirectory {}".format(pv_subd)
 
         # remove pybrat project link in .pybrat_projects/
         remove(pv_projd)

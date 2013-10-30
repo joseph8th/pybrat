@@ -11,7 +11,7 @@ def get_pybrew_root():
             pb_root, pb_bin = os.path.split(p) 
     if pb_root:
         return pb_root
-    return ""
+    return None
 
 def get_vwrap_root():
     """
@@ -25,7 +25,7 @@ def get_vwrap_root():
     elif exists(def_vw_root):
         return def_vw_root
     else:
-        return ""
+        return None
 
 # Basic program globals
 PYBRAT_VER = "0.1"

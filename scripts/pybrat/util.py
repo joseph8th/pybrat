@@ -167,6 +167,7 @@ def pv_link_projs(venv_dir, proj_dir):
     return True
 
 
+
 ### general purpose proj/venv utils ###
 
 def _get_pybrew_venv_list():
@@ -176,6 +177,8 @@ def _get_pybrew_venv_list():
             venv_d[vname] = {'vpath':join(PYBRAT_PYBREW_VENVD, python, vname),
                              'python':python.lower().strip('python-')}
     return { 'brew': {'abspath': PYBRAT_PYBREW_VENVD, 'venv':venv_d}, }
+
+
 
 def _get_vwrap_venv_list():
     venv_d = {}
@@ -189,6 +192,8 @@ def _get_vwrap_venv_list():
                     venv_d[vname] = {'vpath':vpath,
                                      'python':python.lower().strip('python-')}
     return { 'wrap': {'abspath': PYBRAT_VWRAP_ROOTD, 'venv':venv_d}, }
+
+
 
 def _get_wild_venv_list(sroot):
     venv_d = {}
@@ -208,52 +213,71 @@ def _get_wild_venv_list(sroot):
                 venv_d[vname] = {'vpath':root, 'python':python,}
     return { 'venv': {'abspath':spath, 'venv':venv_d,}, }
 
+
+
 def _get_pybrat_proj_list():
     proj_d = {}
-    # get each source dir linked to in .pybrat_projects/*
+ 
+   # get each source dir linked to in .pybrat_projects/*
     for project in sorted(os.listdir(PYBRAT_PROJD)):
+
         # pybrat ln to proj
         proj_ln = join(PYBRAT_PROJD, project)
         if not islink(proj_ln):
             continue
+
         # orig user proj path
         proj_srcd = os.readlink(proj_ln)
+
         # project/.pybrat dir 
         proj_pvd = join(proj_srcd, ".{}".format(PYBRAT_PROG))
+
         # check if .pybrat subdir exists in source dir
         if not exists(proj_pvd):
             proj_venv_d = {'*': {'vpath':"*", 'python':"*"},}
             if not exists(proj_srcd):
                 proj_srcd = "*"
         else:
-            proj_pyver_l = [ py.lower().strip('python-') for py in os.listdir(proj_pvd) 
+            proj_pyver_l = [ py.lower().strip('python-') 
+                             for py in os.listdir(proj_pvd) 
                              if 'python' in py.lower() ]
+
             # check if python subdir(s) exists in .pybrat/
             if not proj_pyver_l:
                 proj_venv_d = {'*': {'vpath':"*", 'python':"*"},}
             else:
                 proj_venv_d = {}
+
                 for python in proj_pyver_l:
                     pyd = join(proj_pvd, "Python-{}".format(python))
                     venv_l = [ venv for venv in os.listdir(pyd) 
                                if islink(join(pyd, venv)) ]
-                    # check if venv subdir link(s) exists in .pybrat/Python-X.Y.Z/
+
+                    # check if venv subdir link(s) exists in .pybrat/Python-*
                     if venv_l:
+
                         for vname in venv_l:
+
                             # check if link resolves to real source dir
                             vpath = os.readlink(join(pyd, vname))
                             if not exists(vpath):
                                 vname = "*"
                                 vpath = "*"
-                            # got vals for every key? add dict item to proj venv dict
-                            proj_venv_d[vname] = {'vpath':vpath, 'python':python,}
+
+                            # got vals for every key? add to proj venv dict
+                            proj_venv_d[vname] = {'vpath':vpath,
+                                                  'python':python,}
 
         # everything OK per project? then set project dict entry
         if proj_venv_d:
-            proj_d[project] = { 'abspath': proj_ln, 'srcpath': proj_srcd, 
+            proj_d[project] = { 'abspath': proj_ln,
+                                'srcpath': proj_srcd, 
                                 'venv':proj_venv_d, }
+
     # return the result
     return proj_d
+
+
 
 def get_project_list(args):
     # list pythonbrew venv project directories and pythons
@@ -267,6 +291,8 @@ def get_project_list(args):
     # DEFAULT: list pybrat projects in .pybrat_projects/*
     else:
         return _get_pybrat_proj_list()
+
+
 
 def get_venv_dict(args):
     if 'wrap' in args and args['wrap']:
@@ -285,6 +311,8 @@ def get_venv_dict(args):
     else:
         venv_d = {}
     return venv_d
+
+
 
 def get_venv(args):
     venv_d = get_venv_dict(args)
@@ -336,47 +364,88 @@ def pv_run_processes(exelist=None, envdict=None, shell=True, bash=False):
 
 
 def pv_check_python(python):
+
+    print "Looking for Python-%s ..." % python
+
     # get list of known pythons from pythonbrew
-    subproc = subprocess.Popen("pythonbrew list -k".split(),
-                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    subproc = subprocess.Popen(
+        "pythonbrew list -k".split(),
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
     pout, perr = subproc.communicate()
     if perr:
         print perr
         return False
-    pb_py_l = [py.lower().strip('python-') for py in pout.split() if 'Python-' in py] 
+
+    pb_py_l = [py.lower().strip('python-') for py in pout.split() 
+               if 'Python-' in py] 
+
     # if given python not in list give up...
     if not python in pb_py_l:
-        print "ERROR: 'Python-{}' not known by pythonbrew..."
+        print "ERROR: 'Python-%s' not known by pythonbrew." % python
+        print "(Tip: run 'pythonbrew update' and try again.)\n" 
         print pout
         return False
+
     # ...else ask to install it
-    if not get_input_bool("This version available. Do you want to install it? [y/N]: ",
-                          default_answer=False):
+    if not get_input_bool(
+            "This version available. Do you want to install it? [y/N]: ",
+            default_answer=False):
         return False
+
+    print "This might take a while. Please try to be patient..."
+
     if not pv_run_processes([['pythonbrew', 'install', python],]):
         print "ERROR: pythonbrew subprocess(es) failed."
         return False
+
     return True
 
 
-def pv_mkvenv(vname, python):
+
+def pv_mkvenv(vname, python, site=False):
+
     venv_d = (get_project_list({'brew':True,}))['brew']['venv']
-    # check if target venv name already exists in pythonbrew
-    if vname in venv_d:
-        print "Error: pythonbrew venv project '{}' already exists.".format(vname)
-        return None
+
     # check if target python version exists or needs to be installed
     if "Python-{}".format(python) not in os.listdir(PYBRAT_PYBREW_PYD):
-        print "Error: target pythonbrew 'Python-{}' is not installed.".format(python)
+        print "Error: target pythonbrew 'Python-%s' is not installed." \
+            % (python)
+
         if not pv_check_python(python):
             return None
-    if not pv_run_processes([['pythonbrew', 'venv', 'create', vname, '-p', python],]):
+
+    # construct the pythonbrew command now before the logic following...
+    proc_l = ['pythonbrew', 'venv', 'create', vname, '-p', python]
+    if site:
+        proc_l.append('-g')
+
+    # check if target venv name already exists in pythonbrew
+    if vname in venv_d:
+        pb_venv = venv_d[vname]
+
+        if not pb_venv['python'] == python:
+            print "Error: venv with same name, but version %s exists." \
+                % (pb_venv['python'])
+            return None
+        else:
+            print "Error: venv '%s' [%s] already exists!" \
+                % (vname, pb_venv['python'])
+            return None
+
+    # otherwise create the venv with pythonbrew
+    elif not pv_run_processes( [proc_l,] ):
         print "Error: pythonbrew subprocess(es) failed."
         return None
+
+    # reload the venv from the project list to be sure & return it
     venv_d = (get_project_list({'brew':True,}))['brew']['venv']
     if vname in venv_d:
         return venv_d[vname]
+
+    # otherwise return nada
     return None
+
 
 
 def pb_rmvenv(vname, proj_dir=None):
@@ -386,12 +455,14 @@ def pb_rmvenv(vname, proj_dir=None):
         return False
     python = venv_d[vname]['python']
     # use pybrew to delete the venv
-    if not pv_run_processes([['pythonbrew', 'venv', 'delete', vname, '-p', python],]):
+    if not pv_run_processes(
+            [['pythonbrew', 'venv', 'delete', vname, '-p', python],]):
         print "Error: pythonbrew subprocess(es) failed."
         return False
     # clean up if linked to a project...
     if proj_dir:
-        pv_pyd = join(proj_dir, ".{}".format(PYBRAT_PROG), "Python-{}".format(python))
+        pv_pyd = join(proj_dir, ".{}".format(PYBRAT_PROG), 
+                      "Python-{}".format(python))
         os.remove(join(pv_pyd, vname))
         if not os.listdir(pv_pyd):
             os.rmdir(pv_pyd)
