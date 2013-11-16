@@ -1,7 +1,145 @@
 #!/usr/bin/env bash
 
-if [ -f "./scripts/pybrat_install.py" ]; then 
-    /usr/bin/python2 "${PWD}/scripts/pybrat_install.py" "$@"
-else
-    echo "Installation package not found."
+
+# required and default variables
+PATH_FOUND=1
+
+REQ_PYVER='2.7'
+DEF_PYENV="${HOME}/.pyenv"
+PYBRAT_HOME="${HOME}/.pybrat"
+
+# split $PATH
+IFS=:
+
+DIRS=
+read DIRS <<END
+$PATH
+END
+
+
+# Function to check $PATH for given path
+function _search_path {
+
+    echo "$1"
+
+    for dir in $DIRS; do
+        if [[ "$dir" == "$1" ]]; then 
+            [ -e "$dir" ] && let PATH_FOUND=0 || let PATH_FOUND=1
+        fi
+    done
+}
+
+
+
+# Check if 'pyenv' and plugins are installed and if not, install.
+function _check_req_pyenv {
+
+    _search_path "${DEF_PYENV}/bin"; [ ! $PATH_FOUND ] && return
+
+    # check for .pyenv directory in case installed but not config'd
+    if [[ -d "$DEF_PYENV" ]]; then
+        echo "==> WARNING: 'pyenv' installed but not configured."
+        echo "Did you read the 'README.md' in '${DEF_PYENV}'?"
+        exit 1
+    fi
+
+    # good to install here ...
+    echo "This version of PyBrat requires 'pyenv'."
+    read -p "Download and install 'pyenv' from 'github'? [y/N]: "
+    [[ "$REPLY" != "y" ]] && exit 1
+    
+    # ... so clone it all from github
+    echo
+    git clone git://github.com/yyuu/pyenv.git $DEF_PYENV
+    if [ ! -e "${DEF_PYENV}" ]; then
+        echo "==> ERROR: 'pyenv' did not install correctly."
+        exit 1
+    fi
+
+    echo
+    git clone git://github.com/yyuu/pyenv-virtualenv.git ${DEF_PYENV}/plugins/pyenv-virtualenv
+    if [ ! -e "${DEF_PYENV}/plugins/pyenv-virtualenv" ]; then
+        echo "==> ERROR: 'pyenv-virtualenv' did not install correctly."
+        exit 1
+    fi
+
+    # auto-configure for bash if user wants
+    echo; read -p "Configure 'pyenv' for your shell? [y/N]: "
+    if [[ "$REPLY" != "y" ]]; then
+        printf "\n*** 'pyenv' needs to be configured to work! ***\n"
+        echo "Read the 'README.md' located in the '${DEF_PYENV}' directory."
+        echo "Then try again to install PyBrat."
+        exit 1
+    fi
+
+    local sh=
+    echo; read -p "Using: [0] .bashrc, [1] .bash_profile, OR [2] .zshenv ? "
+    case $REPLY in
+        0)
+            sh=".bashrc"
+            ;;
+        1)
+            sh=".bash_profile"
+            ;;
+        2)
+            sh=".zshenv"
+            ;;
+        *)
+            exit 1
+            ;;
+    esac
+
+    # append pretty 'pyenv' env vars to the chosen shell cfg
+    printf "\n# 'pyenv' environment configuration\n" >> ${HOME}/.bashrc
+    echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ${HOME}/.bashrc
+    echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ${HOME}/.bashrc
+    echo 'eval "$(pyenv init -)"' >> ${HOME}/.bashrc
+    
+    echo; echo 'You need to restart your shell. Type `exec $SHELL`.'
+    echo "*** Then try again to install PyBrat. ***"
+    printf "\n(On uninstall, delete 'pyenv' section from '${HOME}/${sh}'.)\n"
+
+    exit 1
+}
+
+
+
+# bootstrap python2 if necessary
+function _check_req_pyver {
+
+    local pyver=`which python${REQ_PYVER}`
+
+    [[ "$pyver" == *"$reqver"* ]] && return
+
+    echo "This version of PyBrat requires Python ${REQ_PYVER}."
+    read -p "Bootstrap Python-${REQ_PYVER} with 'pyenv'? [y/N]: "
+    [[ "$choice" != "y" ]] && exit 1
+
+#        _install_req_pyver
+}
+
+
+
+#===========================================#
+#                    MAIN                   #
+#===========================================#
+
+ARGS=
+
+[[ "$#" == "0" ]] && ARGS="-i" || ARGS="$@"
+
+if [[ "$1" == "-i" || "$1" == "--install" ]]; then
+    _search_path $PYBRAT_HOME
+    [ ! $PATH_FOUND ] && echo "PyBrat is already installed. Uninstall first." 
+    _check_req_pyenv
+    _check_req_pyver
 fi
+
+
+if [ -f "./scripts/pybrat_install.py" ]; then 
+    /usr/bin/python2 "${PWD}/scripts/pybrat_install.py" "$ARGS"
+else
+    echo "Install module not found."
+fi
+
+exit

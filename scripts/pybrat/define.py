@@ -2,23 +2,28 @@ import os
 from os.path import join, exists
 
 
+def get_pyenv_root():
+    """
+    Return pyenv root directory or none
+    """
+
+    pe_root = os.environ['PYENV_ROOT']
+    return pe_root
+
 
 def get_pybrew_root():
     """
     Locate pythonbrew's root directory
     """
 
+    pb_root = None
     envpaths = os.environ['PATH'].split(':')
 
     for p in envpaths:
         if ".pythonbrew/bin" in p:
             pb_root, pb_bin = os.path.split(p) 
 
-    if pb_root:
-        return pb_root
-
-    return None
-
+    return pb_root
 
 
 def get_vwrap_root():
@@ -35,11 +40,12 @@ def get_vwrap_root():
     else:
         return None
 
+
 # Basic program globals
 PYBRAT_VER = "0.1"
 PYBRAT_PROG = "pybrat"
 PYBRAT_PROG_VER = "pybrat-{}".format(PYBRAT_VER)
-PYBRAT_PROG_DESCRIPTION="The Wannabe-Ultimate Pythonbrew Commander and Virtualenv Wrangler."
+PYBRAT_PROG_DESCRIPTION="Wanna-Be Python Project Commander."
 
 # Pybrat home directories
 PYBRAT_CONFD = join(os.environ['HOME'], ".{}".format(PYBRAT_PROG))
@@ -68,6 +74,8 @@ PYBRAT_CMD_STR = "#!/usr/bin/env bash\n" + \
 PYBRAT_RC = join(PYBRAT_ETCD, "bashrc")
 
 # pythonbrew working globals
+PYBRAT_PYENV_ROOTD = get_pyenv_root()
+PYBRAT_PYENV_VENVD = join(PYBRAT_PYENV_ROOTD, "versions")
 PYBRAT_PYBREW_ROOTD = get_pybrew_root()
 PYBRAT_PYBREW_VENVD = join(PYBRAT_PYBREW_ROOTD, "venvs")
 PYBRAT_PYBREW_PYD = join(PYBRAT_PYBREW_ROOTD, "pythons")

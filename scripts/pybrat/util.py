@@ -16,6 +16,7 @@ def print_err(msg, warning=False, post_exit=False):
     print >> sys.stderr, err_msg
     return False
 
+
 # get user input
 def get_input_bool(question, default_answer):
     ansstr = raw_input("\n{0}{1}".format(PYBRAT_SHGREEN, question))
@@ -28,6 +29,7 @@ def get_input_bool(question, default_answer):
             ans = False
     return ans
         
+
 ### check if config is set ###
 def set_config():
     retval = True
@@ -103,34 +105,37 @@ def pv_check_subd(pv_subd, args={}):
         if not exists(hooksd):
             print "Creating 'hooks' dir at '{}'".format(hooksd)
             if not pv_mkdirs(hooksd):
-                print_err("unable to create 'hooks' directory", post_exit=True)
+                print_err("unable to create 'hooks' directory", 
+                          post_exit=True)
             for f in os.listdir(PYBRAT_HOOKSD):
                 shutil.copy2(join(PYBRAT_HOOKSD, f), join(hooksd, f))
-                print "Copied:\t{0}\n\t==> {1}".format(join(PYBRAT_HOOKSD, f), 
-                                                       join(hooksd, f))
+                print "Copied:\t{0}\n\t==> {1}".format(
+                    join(PYBRAT_HOOKSD, f), join(hooksd, f))
                             
     # check if multi-venv or multi-
     if 'vname' in args:
         old_pyd_l = [join(pv_subd, pyd) for pyd in os.listdir(pv_subd) 
-                     if 'python' in pyd.lower() and isdir(join(pv_subd, pyd))] 
+                     if 'python' in pyd.lower() 
+                     and isdir(join(pv_subd,pyd))] 
         if old_pyd_l:
             print "{}".format(PYBRAT_SHWHITE) + "%-9s" % "WARNING:" + \
                 "other Python(s) are already attached to this project!"
             print  "{}".format(PYBRAT_SHGRAY) + "%-9s" % "OPTIONS:" + \
-                "(1) make '%s' a single-venv project with 'purge and replace', OR" \
-                % (args['proj'])
-            print "%-9s(2) add '%s' to a list of linked venvs in a multi-venv project.\n" \
+                "(1) make '%s' a single-venv project, OR" % (args['proj'])
+            print "%-9s(2) add '%s' to a list in a multi-venv project.\n" \
                 % ("", args['vname'])
             print "{}".format(PYBRAT_SHWHITE) + \
-                "[y]: YES, purge old links and replace with '{}'.".format(args['vname'])
+                "[y]: YES, purge old links and replace with '%s'." \
+                % (args['vname'])
             print "[N]: NO, don't purge and replace. " + \
-                "Add new venv '{}' to a list of linked venvs.".format(args['vname'])
-            question = "Purge all old venv links and replace with new one? [y/N]: "
+                "Add new venv '%s' to a list of linked venvs." & \
+                (args['vname'])
+            prompt = "Purge old venv links and replace with new one? [y/N]: "
             
-            # if add venv to list then just return leaving .pybrat untouched...
-            if not get_input_bool(question, default_answer=False):
-                print "\nAdding '{}' to list of venvs ".format(args['vname']) + \
-                    "in '{}'...".format(args['proj'])
+            # if add venv to list then just return leaving .pybrat untouched
+            if not get_input_bool(prompt, default_answer=False):
+                print "\nAdding '%s' to list of venvs " % (args['vname']) + \
+                    "in '%s'..." % (args['proj'])
             # ...else purge .pybrat subdir first then return
             else:
                 print "\nPurging old venvs in '{}'...".format(args['proj'])
@@ -170,11 +175,20 @@ def pv_link_projs(venv_dir, proj_dir):
 
 ### general purpose proj/venv utils ###
 
+
+def _get_pyenv_venv_list():
+
+    venv_d = {}
+    for python in os.listdir(PYBRAT_PYENV_VENVD):
+        for vname in os.listdir(join(PYBRAT_PYENV_VENVD, python)):
+
+
 def _get_pybrew_venv_list():
     venv_d = {}
     for python in os.listdir(PYBRAT_PYBREW_VENVD):
         for vname in os.listdir(join(PYBRAT_PYBREW_VENVD, python)):
-            venv_d[vname] = {'vpath':join(PYBRAT_PYBREW_VENVD, python, vname),
+            venv_d[vname] = {'vpath':join(PYBRAT_PYBREW_VENVD, 
+                                          python, vname),
                              'python':python.lower().strip('python-')}
     return { 'brew': {'abspath': PYBRAT_PYBREW_VENVD, 'venv':venv_d}, }
 
@@ -255,7 +269,6 @@ def _get_pybrat_proj_list():
 
                     # check if venv subdir link(s) exists in .pybrat/Python-*
                     if venv_l:
-
                         for vname in venv_l:
 
                             # check if link resolves to real source dir
@@ -333,14 +346,15 @@ def pv_run_processes(exelist=None, envdict=None, shell=True, bash=False):
             env[var] = val
 
     # execute command in subshell or subprocess
-    # spawn new shell
     if bash:
-        print "{0}==> Entered pybrat subshell. {1}".format(PYBRAT_SHGREEN, PYBRAT_SHWHITE),
+        print "{0}==> Entered pybrat subshell. {1}".format(
+            PYBRAT_SHGREEN, PYBRAT_SHWHITE),
         print "Enter 'deactivate' to exit.{}".format(PYBRAT_SHGRAY)
         print "# Enter 'home' to change to project dir. Enter 'prompt' to toggle prompt."
         os.environ.update(env)
         os.system('bash -l')
-        print "{0}==> Exited pybrat subshell.{1}".format(PYBRAT_SHGREEN, PYBRAT_SHGRAY)
+        print "{0}==> Exited pybrat subshell.{1}".format(
+            PYBRAT_SHGREEN, PYBRAT_SHGRAY)
 
     # exec command in subprocess
     else:
@@ -350,14 +364,16 @@ def pv_run_processes(exelist=None, envdict=None, shell=True, bash=False):
             print "{}==> Executing command '".format(PYBRAT_SHGREEN), exe, \
                 "'...{}".format(PYBRAT_SHGRAY)
             subproc = subprocess.Popen(exe, env=env, shell=shell,
-                                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                                       stdout=subprocess.PIPE, 
+                                       stderr=subprocess.STDOUT)
             pout, perr = subproc.communicate()
             if pout:
                 print pout
             if perr:
                 print perr
                 return False
-            print "{0}==> Execution complete.{1}".format(PYBRAT_SHGREEN, PYBRAT_SHGRAY)
+            print "{0}==> Execution complete.{1}".format(PYBRAT_SHGREEN, 
+                                                         PYBRAT_SHGRAY)
 
     # all done executing commands? ok...
     return True
@@ -403,7 +419,10 @@ def pv_check_python(python):
 
 
 
-def pv_mkvenv(vname, python, site=False):
+def pv_mkvenv(vname, python, venv, site=False):
+    """ 
+    Function to create virtualenv(s) using given 'venv' method.
+    """
 
     venv_d = (get_project_list({'brew':True,}))['brew']['venv']
 
