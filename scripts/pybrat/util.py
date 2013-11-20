@@ -1,6 +1,7 @@
 import os
 import sys
-from os.path import join, exists, basename, islink, isfile, isdir
+from os.path import join, exists, basename, islink, isfile, isdir, \
+    splitext
 import shutil
 import subprocess
 from pybrat.define import *
@@ -17,8 +18,44 @@ def print_err(msg, warning=False, post_exit=False):
     return False
 
 
-# get user input
+
+### load subcommands funcs ###
+
+def load_module(name):
+    if name in sys.modules:
+        return
+    try:
+        __import__(name)
+    except ImportError:
+        pass
+
+        
+def get_module_list(pkgname, modpath):
+    """
+    Assumes [modpath]/*.py are commands if '__' is not in filename.
+    """
+    return ["{0}.{1}".format(pkgname, fname) for fname, fext 
+            in map(splitext, os.listdir(modpath)) 
+            if fext == '.py' and '__' not in fname]
+    
+
+def load_module_list(pkgname, modpath):
+    """
+    Load all modules listed.
+    """
+    mod_l = get_module_list(pkgname, modpath)
+    for name in mod_l:
+        print name
+#        load_module(pkgname + '.' + name)
+
+
+
+### other generic funcs ###
+
 def get_input_bool(question, default_answer):
+    """
+    Get user input.     """
+
     ansstr = raw_input("\n{0}{1}".format(PYBRAT_SHGREEN, question))
     print "{}".format(PYBRAT_SHGRAY)
     ans = default_answer
@@ -176,11 +213,10 @@ def pv_link_projs(venv_dir, proj_dir):
 ### general purpose proj/venv utils ###
 
 
-def _get_pyenv_venv_list():
-
-    venv_d = {}
-    for python in os.listdir(PYBRAT_PYENV_VENVD):
-        for vname in os.listdir(join(PYBRAT_PYENV_VENVD, python)):
+#def _get_pyenv_venv_list():
+#    venv_d = {}
+#    for python in os.listdir(PYBRAT_PYENV_VENVD):
+#        for vname in os.listdir(join(PYBRAT_PYENV_VENVD, python)):
 
 
 def _get_pybrew_venv_list():

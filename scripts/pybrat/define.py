@@ -2,6 +2,26 @@ import os
 from os.path import join, exists
 
 
+# Basic program globals
+PYBRAT_VER = "0.1"
+PYBRAT_PROG = "pybrat"
+PYBRAT_PROG_VER = "pybrat-{}".format(PYBRAT_VER)
+PYBRAT_PROG_DESCRIPTION="Wanna-Be Python Project Commander."
+
+
+# Some functions to get the right root dirs 
+
+def get_pybrat_root():
+    """
+    Return pybrat root directory or none
+    """
+    
+    def_root = join(os.environ['HOME'], ".%s" % PYBRAT_PROG)
+    if os.path.isdir( def_root ):
+        return def_root
+    return os.path.dirname(os.getcwd())
+
+
 def get_pyenv_root():
     """
     Return pyenv root directory or none
@@ -41,20 +61,18 @@ def get_vwrap_root():
         return None
 
 
-# Basic program globals
-PYBRAT_VER = "0.1"
-PYBRAT_PROG = "pybrat"
-PYBRAT_PROG_VER = "pybrat-{}".format(PYBRAT_VER)
-PYBRAT_PROG_DESCRIPTION="Wanna-Be Python Project Commander."
-
 # Pybrat home directories
-PYBRAT_CONFD = join(os.environ['HOME'], ".{}".format(PYBRAT_PROG))
-PYBRAT_MAIND = join(PYBRAT_CONFD, "scripts")
-PYBRAT_PROGD = join(PYBRAT_MAIND, PYBRAT_PROG)
-PYBRAT_SUBCMDD = join(PYBRAT_PROGD, "subcommands")
+PYBRAT_ROOT = get_pybrat_root()
+PYBRAT_CONFD = PYBRAT_ROOT
+#join(os.environ['HOME'], ".{}".format(PYBRAT_PROG))
 PYBRAT_BIND = join(PYBRAT_CONFD, "bin")
 PYBRAT_ETCD = join(PYBRAT_CONFD, "etc")
 PYBRAT_HOOKSD = join(PYBRAT_ETCD, "hooks")
+# main pybrat file structure
+PYBRAT_MAIND = join(PYBRAT_CONFD, "scripts")
+PYBRAT_PROGD = join(PYBRAT_MAIND, PYBRAT_PROG)
+PYBRAT_SUBCMDD = join(PYBRAT_PROGD, "subcommands")
+PYBRAT_HACKSD = join(PYBRAT_PROGD, "hacks")
 # User modifiable global
 PYBRAT_PROJD =join(os.environ['HOME'], ".pybrat_projects")
 
