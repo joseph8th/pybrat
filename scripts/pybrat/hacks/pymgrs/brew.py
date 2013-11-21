@@ -1,4 +1,4 @@
-from pybrew.hacks.pyman import PythonManagerHack
+from pybrew.hacks.hackmgr import PythonManagerHack
 
 class PythonbrewPythonMgr(PythonManagerHack):
 

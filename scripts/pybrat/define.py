@@ -1,5 +1,5 @@
 import os
-from os.path import join, exists
+from os.path import join, exists, dirname, realpath, splitext
 
 
 # Basic program globals
@@ -13,13 +13,14 @@ PYBRAT_PROG_DESCRIPTION="Wanna-Be Python Project Commander."
 
 def get_pybrat_root():
     """
-    Return pybrat root directory or pwd
+    Return pybrat root directory or correct parent of pwd
     """
-    
-    def_root = join(os.environ['HOME'], ".%s" % PYBRAT_PROG)
-    if os.path.isdir( def_root ):
-        return def_root
-    return os.path.dirname(os.getcwd())
+
+    if 'PYBRAT_ROOT' in os.environ.keys():
+        root = os.environ['PYBRAT_ROOT']
+    else:
+        root = dirname(dirname(dirname(realpath(__file__))))
+    return root
 
 
 def get_pyenv_root():
@@ -27,8 +28,11 @@ def get_pyenv_root():
     Return pyenv root directory or none
     """
 
-    pe_root = os.environ['PYENV_ROOT']
-    return pe_root
+    if 'PYENV_ROOT' in os.environ.keys():
+        root = os.environ['PYENV_ROOT']
+    else:
+        root = ''
+    return root
 
 
 def get_pybrew_root():
@@ -36,14 +40,14 @@ def get_pybrew_root():
     Locate pythonbrew's root directory
     """
 
-    pb_root = None
+    root = None
     envpaths = os.environ['PATH'].split(':')
 
     for p in envpaths:
         if ".pythonbrew/bin" in p:
-            pb_root, pb_bin = os.path.split(p) 
+            root, pb_bin = os.path.split(p) 
 
-    return pb_root
+    return root
 
 
 def get_vwrap_root():

@@ -27,7 +27,8 @@ def load_module(name):
     try:
         __import__(name)
     except ImportError:
-        pass
+        print "Import Error."
+#        pass
 
         
 def get_module_list(pkgname, modpath):
@@ -45,8 +46,7 @@ def load_module_list(pkgname, modpath):
     """
     mod_l = get_module_list(pkgname, modpath)
     for name in mod_l:
-        print name
-#        load_module(pkgname + '.' + name)
+        load_module(pkgname + '.' + name)
 
 
 
