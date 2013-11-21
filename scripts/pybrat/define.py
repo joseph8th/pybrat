@@ -13,7 +13,7 @@ PYBRAT_PROG_DESCRIPTION="Wanna-Be Python Project Commander."
 
 def get_pybrat_root():
     """
-    Return pybrat root directory or none
+    Return pybrat root directory or pwd
     """
     
     def_root = join(os.environ['HOME'], ".%s" % PYBRAT_PROG)
