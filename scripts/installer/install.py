@@ -9,11 +9,43 @@ from pybrat.define import PYBRAT_PATHS, PYBRAT_CONFD, PYBRAT_PROGD, \
     PYBRAT_CMD, PYBRAT_CMD_STR, PYBRAT_HOOKSD
 
 
-
 class Installer(object):
     """ 
     Installs `pybrat` and some dependencies. 
     """
+
+    def __init__(self):
+
+        fdict = {}
+        fdict_cfg_l = [
+            { 'dname': 'etc', 'fname': ['bashrc',], 'fext': '', 'target': PYBRAT_ETCD }, 
+            { 'dname': 'hooks', 'fname': None, 'fext': '.skel', 'target': PYBRAT_HOOKSD }, 
+            { 'dname': 'pybrat', 'fname': None, 'fext': '.py', 'target': PYBRAT_PROGD },
+            { 'dname': 'subcommands', 'fname': None, 'fext': '.py', 'target': PYBRAT_SUBCMDD },
+            { 'dname': 'hacks', 'fname': None, 'fext': '.py', 'target': PYBRAT_HACKSD },
+            ]
+
+
+    def _set_fdict(self, root, files):
+
+        for fdict_d in self.fdict_cfg_l:
+            if basename(root) == fdict_d['dname']:
+
+                self.fdict[ fdict_d['dname'] ] = {}
+
+                for f in files:
+                    fname, fext = splitext(f)
+
+                    if not fdict_d['fname']:
+                        if fext == fdict_d['fext']:
+                            self.fdict[ fdict_d['fname'] ] = {'cpfrom': join(root, f), 
+                                                              'cpto': fdict_d['target']}
+                    else:
+                        for sname in fdict_d['fname']:
+                            if fext == fdict_d['fext'] and fname == sname:
+                                self.fdict[ fdict_d['fname'] ] = {'cpfrom': join(root, f), 
+                                                                  'cpto': fdict_d['target']}
+
 
     def _install_pybrat(self, install_path):
 
@@ -27,52 +59,58 @@ class Installer(object):
         # copy python scripts to ~/.pybrat/scripts/
         fdict = {}
         for root, dirs, files in os.walk(install_path):
-            # in /scripts/ dir
+
+            # in /scripts/ dir ... top gets treated diff
             if basename(root) == 'scripts':
                 del dirs[dirs.index('installer')]
-                fdict['scripts'] = {}
+                self.fdict['scripts'] = {}
                 for f in files:
                     fname, fext = splitext(f)
                     if 'install' not in fname:
                         if fext == '.py':
-                            fdict['scripts'][f] = {'cpfrom': join(root, f), 
-                                                   'cpto': PYBRAT_PROGD}
-            if basename(root) == 'etc':
-                fdict['etc'] = {}
-                for f in files:
-                    fname, fext = splitext(f)
-                    if fext == '' and fname == 'bashrc':
-                        fdict['etc'][f] = {'cpfrom': join(root, f), 
-                                           'cpto': PYBRAT_ETCD}
-            if basename(root) == 'hooks':
-                fdict['hooks'] = {}
-                for f in files:
-                    fname, fext = splitext(f)
-                    if fext == '.skel':
-                        fdict['hooks'][f] = {'cpfrom': join(root, f),
-                                             'cpto': PYBRAT_HOOKSD}
+                            self.fdict['scripts'][f] = {'cpfrom': join(root, f), 
+                                                        'cpto': PYBRAT_PROGD}
+
+            # then copy the rest using fdict_cfg_l
+            self._set_fdict(root, files)
+
+#            if basename(root) == 'etc':
+#                fdict['etc'] = {}
+#                for f in files:
+#                    fname, fext = splitext(f)
+ #                   if fext == '' and fname == 'bashrc':
+  #                      fdict['etc'][f] = {'cpfrom': join(root, f), 
+   #                                        'cpto': PYBRAT_ETCD}
+    #        if basename(root) == 'hooks':
+     #           fdict['hooks'] = {}
+      #          for f in files:
+       #             fname, fext = splitext(f)
+        #            if fext == '.skel':
+         #               fdict['hooks'][f] = {'cpfrom': join(root, f),
+          #                                   'cpto': PYBRAT_HOOKSD}
             # ...in the /scripts/pybrat/ dir
-            if basename(root) == 'pybrat':
-                fdict['pybrat'] = {}
-                for f in files:
-                    fname, fext = splitext(f)
-                    if fext == '.py':
-                        fdict['pybrat'][f] = {'cpfrom': join(root, f),
-                                              'cpto': PYBRAT_PROGD}
+           # if basename(root) == 'pybrat':
+            #    fdict['pybrat'] = {}
+             #   for f in files:
+              #      fname, fext = splitext(f)
+               #     if fext == '.py':
+                #        fdict['pybrat'][f] = {'cpfrom': join(root, f),
+      #                                        'cpto': PYBRAT_PROGD}
             # ...in /scripts/pybrat/subcommands dir
-            if basename(root) == 'subcommands':
-                fdict['subcommands'] = {}
-                for f in files:
-                    fname, fext = splitext(f)
-                    if fext == '.py':
-                        fdict['subcommands'][f] = {'cpfrom': join(root, f),
-                                                   'cpto': PYBRAT_SUBCMDD}
+#            if basename(root) == 'subcommands':
+#                fdict['subcommands'] = {}
+ #               for f in files:
+  #                  fname, fext = splitext(f)
+   #                 if fext == '.py':
+    #                    fdict['subcommands'][f] = {'cpfrom': join(root, f),
+     #                                              'cpto': PYBRAT_SUBCMDD}
+
         # fix 'pybrat_main.py' target
-        fdict['scripts'][PYBRAT_MAINF]['cpto'] = join(PYBRAT_MAIND, 
+        self.fdict['scripts'][PYBRAT_MAINF]['cpto'] = join(PYBRAT_MAIND, 
                                                       PYBRAT_MAINF)
 
         # copy the files!
-        for file_d in fdict.values():
+        for file_d in self.fdict.values():
             for f in file_d.values(): 
                 if isfile(f['cpfrom']):
                     copy2(f['cpfrom'], f['cpto'])
