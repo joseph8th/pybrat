@@ -2,7 +2,7 @@
 
 
 # required and default variables
-ERR=0
+NOERR=0
 FIND_PATH=1
 
 REQ_PYVER='2.7'
@@ -22,18 +22,27 @@ END
 
 # Error logging
 function _err {
-    let ERR=ERR+1
+    let NOERR=NOERR+1
 }
 
 
 
 # Function to check $PATH for given path
 function _search_path {
+
     for dir in $DIRS; do
-        if [[ "$dir" == "$1" ]]; then 
-            [ -e "$dir" ] && let FIND_PATH=1 || let FIND_PATH=0
+#############3333
+        echo "$dir =? $1"
+        if [[ "$dir" == *"$1"* ]]; then 
+            # found the dir in the $PATH so return found
+            if [[ -d "$dir" ]]; then
+                FIND_PATH=0; return
+            fi
         fi
     done
+
+    # else not found
+    FIND_PATH=1
 }
 
 
@@ -51,7 +60,7 @@ function _config_shrc_pybrew {
 	>> ${HOME}/.bashrc
 
     echo; echo '==> DONE! You need to restart your shell. Type `exec $SHELL`.'
-    printf "\n(On uninstall, delete 'pythonbrew' section from '${HOME}/.bashrc'.)\n"
+    printf "(On uninstall, delete 'pythonbrew' section from '${HOME}/.bashrc'.)\n\n"
 
     return
 }
@@ -62,7 +71,7 @@ function _config_shrc_pybrew {
 function _check_req_pybrew {
 
     _search_path "${DEF_PYBREW}/bin"
-    [ ! $FIND_PATH ] && return
+    [ -z $FIND_PATH ] && return
 
     if [ -e "$DEF_PYBREW" ]; then
 	echo "==> WARNING: 'pythonbrew' installed but not configured."
@@ -121,7 +130,7 @@ function _config_shrc_pyenv {
     echo 'eval "$(pyenv init -)"' >> ${HOME}/${sh}
     
     echo; echo '==> DONE! You need to restart your shell. Type `exec $SHELL`.'
-    printf "\n(On uninstall, delete 'pyenv' section from '${HOME}/${sh}'.)\n"
+    printf "(On uninstall, delete 'pyenv' section from '${HOME}/${sh}'.)\n\n"
 
     return
 }
@@ -131,8 +140,11 @@ function _config_shrc_pyenv {
 # Check if 'pyenv' and plugins are installed and if not, install.
 function _check_req_pyenv {
 
-    _search_path "${DEF_PYENV}/bin"
-    [ ! $FIND_PATH ] && return
+###########333
+    spath="${DEF_PYENV}/bin"
+    _search_path $spath
+    echo "$DEF_PYENV $FIND_PATH"
+    [[ "$FIND_PATH" -eq "0" ]] && return
 
     # check for .pyenv directory in case installed but not config'd
     if [ -e "$DEF_PYENV" ]; then
@@ -167,27 +179,30 @@ function _check_req_pyenv {
 
 
 
-# bootstrap python2 if necessary
+# want to run pybrat in pyenv-virtualenv w/ python2 and pip-2.7
 function _check_req_pyver {
 
     local pyver=`which python${REQ_PYVER}`
 
-    [[ "$pyver" == *"$reqver"* ]] && return
+    [[ "$pyver" == *"$REQ_PYVER"* && "$pyver" == *"$DEF_PYENV"* ]] && return
 
-    echo "This version of PyBrat requires Python ${REQ_PYVER}."
+    echo "==> ERROR: This version of PyBrat requires a pyenv-virtualenv with Python-${REQ_PYVER}."
     read -p "Bootstrap Python-${REQ_PYVER} with 'pyenv'? [y/N]: "
     [[ "$choice" != "y" ]] && _err && return
 
-#        _install_req_pyver
+    # then install a pyenv-virtualenv ...
+
 }
 
 
 
+# check for required dependencies
 function _check_req {
-    _check_req_pyenv
-    _check_req_pyver
-    _check_req_pybrew     # to be deprecated
+    [[ "$NOERR" -ne "0" ]] && return || _check_req_pyenv
+    [[ "$NOERR" -ne "0" ]] && return || _check_req_pyver
+    [[ "$NOERR" -ne "0" ]] && return || _check_req_pybrew
 }
+
 
 
 # make sure the python installer exists first, then run it
@@ -205,26 +220,32 @@ function _run_pyinstall {
 #                    MAIN                   #
 #===========================================#
 
+ARG=
 OPTIND=1
 
-while getopts "hi" opt; do
+while getopts "hirud" opt; do
     case "$opt" in
         h)
             _run_pyinstall -h; exit 1
             ;;
-        i)
+        i|r)
             _search_path $PYBRAT_HOME
-            [ ! $FIND_PATH ] && echo "PyBrat is already installed. Uninstall first." && exit 1
+            if [ -z $FIND_PATH ]; then
+                echo "==> ERROR: PyBrat is already installed. Uninstall first."
+                _err; exit $NOERR
+            fi
+
+            _check_req
+            if [[ "$NOERR" -ne "0" ]]; then
+                echo "==> ERROR (${NOERR}): Try reinstalling after fixing stuff."
+                exit $NOERR
+            fi
             ;;
     esac
 done
 
 # pre-parse the args before sending to python installer
 [[ "$#" == "0" ]] && ARG="-i" || ARG="$1"
-
-# clear to check for dependencies before installing
-_check_req
-[ ! -z "$ERR" ] && echo "==> ERROR (${ERR}): Try reinstalling after fixing stuff." && exit $ERR
 
 # otherwise, send the args on to python installer ...
 _run_pyinstall $ARG

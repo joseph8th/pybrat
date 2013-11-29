@@ -3,7 +3,7 @@
 Author: Joseph Edwards
 """
 import os
-import installer
+import pybrat.installer as installer
 
 # installer root is at this file
 if __name__=="__main__":
