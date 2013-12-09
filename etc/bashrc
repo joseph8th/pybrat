@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Pybrat bashrc settings
+# Pybrat bashrc settings for pythonbrew (deprecated)
 
 PYBRAT_PATH_ROOT="$PYBRAT_CONFD"
 if [ -z "${PYBRAT_PATH_ROOT}" ] ; then
@@ -13,7 +13,7 @@ PYBRAT_PYTHON_USE="$PYBRAT_PYTHON"
 
 PYBRAT_HOOKS_DIR="$PYBRAT_PROJ_HOOKSD"
 
-PYBRAT_PS1_SWAP="$PS1"
+#PYBRAT_PS1_SWAP="$PS1"
 
 # Pybrat bashrc functions
 
@@ -46,24 +46,24 @@ __pybrat_chdir_workd()
     fi      
 }
 
-__pybrat_toggle_active_prompt()
-{
-    tmp_ps1="$PS1"
-    PS1="$PYBRAT_PS1_SWAP"
-    PYBRAT_PS1_SWAP="$tmp_ps1"
-}
+#__pybrat_toggle_active_prompt()
+#{
+#    tmp_ps1="$PS1"
+#    PS1="$PYBRAT_PS1_SWAP"
+#    PYBRAT_PS1_SWAP="$tmp_ps1"
+#}
 
 __pybrat_set_env_active()
 {
-    green="\[\033[01;32m\]"
-    gray="\[\033[0;37m\]"
+#    green="\[\033[01;32m\]"
+#    gray="\[\033[0;37m\]"
 
-    old_ps1=$(echo -e "${PS1}" | tr '\n' ' ')
-    PS1="\n${gray}[${green}${PYBRAT_PYTHON_USE}${gray}] ${old_ps1}"
-    PYBRAT_PS1_SWAP="\n${gray}[${green}*${gray}]${old_ps1}"
+#    old_ps1=$(echo -e "${PS1}" | tr '\n' ' ')
+#    PS1="\n${gray}[${green}${PYBRAT_PYTHON_USE}${gray}] ${old_ps1}"
+#    PYBRAT_PS1_SWAP="\n${gray}[${green}*${gray}]${old_ps1}"
     alias deactivate='__pybrat_predeactivate; exit'
     alias home='cd ${PYBRAT_WORK_DIR}'
-    alias prompt=__pybrat_toggle_active_prompt
+#    alias prompt=__pybrat_toggle_active_prompt
 }
 
 __pybrat_preactivate()

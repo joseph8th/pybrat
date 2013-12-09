@@ -74,34 +74,6 @@ Commands
           -v VENV, --venv VENV  use virtualenv 'VENV' (if multi-venv project)
           -p, --python          ONLY use given python version (X.Y[.Z])
 
-Examples
---------
-
-    To list all your pybrat projects and linked virtualenvs, use:
-
-        $ pybrat list
-
-    To initialize an existing 'myproject' directory using an imported 'wild' virtualenv:
-
-        $ pybrat init -v myproject ./path/to/venv
-
-    To use a selected venv in a multi-venv project:
-
-        $ pybrat use myproject -v myvenv
-
-Known Bugs
-----------
-
-    * Uses deprecated os.system call to create the subshell.
-    * Doesn't really communicate with pythonbrew in subprocess calls.
-
-Changelog
----------
-
-    0.0 - basic functionality hacked out in a pile of sleepless sloppy code
-    0.1 - changed name from 'pyvenv' (taken) to 'pybrat
-    0.2 -  added support for 'pyenv' python/virtualenv manager
-
 Author
 ------
 

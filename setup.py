@@ -1,5 +1,8 @@
+#!/usr/bin/env python
+
 import os
-from setuptools import setup, find_packages
+from distutils.core import setup
+
 from pybrat.define import PYBRAT_VER, PYBRAT_PROG_DESCRIPTION
 
 README = os.path.join(os.path.dirname(__file__),'PKG-INFO')
@@ -8,9 +11,9 @@ LONG_DESCRIPTION = open(README).read() + "\n"
 setup(
     name='pybrat',
     version=PYBRAT_VER,
-    packages=find_packages(),
-    include_package_data=True,
-    
+    packages=['pybrat', 'pybrat.installer', 'pybrat.subcommands', 'pybrat.hacks',],
+    scripts=['pybrat_install.py', 'pybrat_main.py',],
+
     keywords='python',
     description=PYBRAT_PROG_DESCRIPTION,
     long_description=LONG_DESCRIPTION,

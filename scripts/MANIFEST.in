@@ -1,2 +1,0 @@
-include pybrat_*.py
-recursive-include etc *

@@ -1,0 +1,254 @@
+#!/usr/bin/env bash
+
+
+# USER CONFIGURABLE DEFAULTS FOR HACKS (pyenv, etc.)
+source ./etc/hacks.cfg
+
+
+# required and default variables
+NOERR=0
+FIND_PATH=1
+REQ_PYVER='2.7'
+
+
+# split $PATH
+IFS=:
+
+DIRS=
+read DIRS <<END
+$PATH
+END
+
+
+
+# Error logging
+function _err {
+    let NOERR=NOERR+1
+}
+
+
+
+# Function to check $PATH for given path
+function _search_path {
+
+    for dir in $DIRS; do
+#############3333
+        echo "$dir =? $1"
+        if [[ "$dir" == *"$1"* ]]; then 
+            # found the dir in the $PATH so return found
+            if [[ -d "$dir" ]]; then
+                FIND_PATH=0; return
+            fi
+        fi
+    done
+
+    # else not found
+    FIND_PATH=1
+}
+
+
+
+function _config_shrc_pybrew {
+
+    echo; read -p "Configure 'pythonbrew' in your '~/.bashrc'? [y/N]: "
+    if [[ "$REPLY" != "y" ]]; then
+	printf "\n==> ERROR: 'pythonbrew' needs to be configured to work!\n"
+	_err; return
+    fi
+
+    printf "\n# 'pythonbrew' environment configuration\n" >> ${HOME}/.bashrc
+    echo "[[ -s ${HOME}/.pythonbrew/etc/bashrc ]] && source ${HOME}/.pythonbrew/etc/bashrc" \
+	>> ${HOME}/.bashrc
+
+    echo; echo '==> DONE! You need to restart your shell. Type `exec $SHELL`.'
+    printf "(On uninstall, delete 'pythonbrew' section from '${HOME}/.bashrc'.)\n\n"
+
+    return
+}
+
+
+
+# Check if 'pythonbrew' installed and if not, install.
+function _check_req_pybrew {
+
+    _search_path "${PYBREW_DEF_ROOTD}/bin"
+    [ -z $FIND_PATH ] && return
+
+    if [ -e "$PYBREW_DEF_ROOTD" ]; then
+	echo "==> WARNING: 'pythonbrew' installed but not configured."
+	echo "Did you configure your shell script and type 'exec $SHELL'?"
+        _config_shrc_pybrew
+	_err; return
+    fi
+
+    # good to install ...
+    echo "==> ERROR: This (development) version still requires (deprecated) 'pythonbrew'."
+    read -p "Use 'curl' to install 'pythonbrew' to defaults? [y/N]: "
+    [[ "$REPLY" != "y" ]] && _err && return
+
+    # ... so curl it all to defaults
+    echo
+    curl -kL http://xrl.us/pythonbrewinstall | bash
+    if [ ! -e "${PYBREW_DEF_ROOTD}" ]; then
+	echo "==> ERROR: 'pythonbrew' did not install correctly."
+	_err; return
+    fi
+
+    _config_shrc_pybrew
+    _err; return
+}
+
+
+
+# Configure the user's shell script if they want.
+function _config_shrc_pyenv {
+
+    echo; read -p "Configure 'pyenv' for your shell? [y/N]: "
+    if [[ "$REPLY" != "y" ]]; then
+        printf "\n==> ERROR: 'pyenv' needs to be configured to work!\n"
+        echo "Read the 'README.md' located in the '${PYENV_DEF_ROOTD}' directory."
+	_err; return
+    fi
+
+    local sh=
+    echo; read -p "Using: [0] .bashrc, OR [1] .bash_profile ? "
+    case $REPLY in
+        0)
+            sh=".bashrc"
+            ;;
+        1)
+            sh=".bash_profile"
+            ;;
+        *)
+	    _err; return
+            ;;
+    esac
+
+    # append pretty 'pyenv' env vars to the chosen shell cfg
+    printf "\n# 'pyenv' environment configuration\n" >> ${HOME}/${sh}
+    echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ${HOME}/${sh}
+    echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ${HOME}/${sh}
+    echo 'eval "$(pyenv init -)"' >> ${HOME}/${sh}
+    
+    echo; echo '==> DONE! You need to restart your shell. Type `exec $SHELL`.'
+    printf "(On uninstall, delete 'pyenv' section from '${HOME}/${sh}'.)\n\n"
+
+    return
+}
+
+
+
+# Check if 'pyenv' and plugins are installed and if not, install.
+function _check_req_pyenv {
+
+###########333
+    spath="${PYENV_DEF_ROOTD}/bin"
+    _search_path $spath
+    echo "$PYENV_DEF_ROOTD $FIND_PATH"
+    [[ "$FIND_PATH" -eq "0" ]] && return
+
+    # check for .pyenv directory in case installed but not config'd
+    if [ -e "$PYENV_DEF_ROOTD" ]; then
+        echo "==> ERROR: 'pyenv' installed but not configured."
+        echo "Did you read the 'README.md' in '${PYENV_DEF_ROOTD}'?"
+        _config_shrc_pyenv
+	_err; return
+    fi
+
+    # good to install here ...
+    echo "==> ERROR: This version of PyBrat requires 'pyenv'."
+    read -p "Use 'git' to clone and install 'pyenv' to defaults? [y/N]: "
+    [[ "$REPLY" != "y" ]] && _err && return
+    
+    # ... so clone it all from github
+    echo
+    git clone git://github.com/yyuu/pyenv.git $PYENV_DEF_ROOTD
+    if [ ! -e "$PYENV_DEF_ROOTD" ]; then
+        echo "==> ERROR: 'pyenv' did not install correctly."
+	_err; return
+    fi
+    echo
+    git clone git://github.com/yyuu/pyenv-virtualenv.git ${PYENV_DEF_ROOTD}/plugins/pyenv-virtualenv
+    if [ ! -e "${PYENV_DEF_ROOTD}/plugins/pyenv-virtualenv" ]; then
+        echo "==> ERROR: 'pyenv-virtualenv' did not install correctly."
+	_err; return
+    fi
+
+    _config_shrc_pyenv
+    _err; return
+}
+
+
+
+# using only Python 2.7, for now ...
+function _check_req_pyver {
+
+    local pyver=`which python${REQ_PYVER}`
+
+    [[ "$pyver" == *"$REQ_PYVER"* && "$pyver" == *"$PYENV_DEF_ROOTD"* ]] && return
+
+    echo "==> ERROR: This version of PyBrat requires a pyenv-virtualenv with Python-${REQ_PYVER}."
+    read -p "Bootstrap Python-${REQ_PYVER} with 'pyenv'? [y/N]: "
+    [[ "$choice" != "y" ]] && _err && return
+
+    # then install a pyenv-virtualenv ...
+
+}
+
+
+
+# check for required dependencies
+function _check_req {
+    [[ "$NOERR" -ne "0" ]] && return || _check_req_pyenv
+    [[ "$NOERR" -ne "0" ]] && return || _check_req_pyver
+    [[ "$NOERR" -ne "0" ]] && return || _check_req_pybrew
+}
+
+
+
+# make sure the python installer exists first, then run it
+function _run_pyinstall {
+    if [ -e "./bin/pybrat_install" ]; then 
+        exec "./bin/pybrat_install" $@
+    else
+        echo "Install module not found."
+    fi
+}
+
+
+
+#===========================================#
+#                    MAIN                   #
+#===========================================#
+
+ARG=
+OPTIND=1
+
+while getopts "hirud" opt; do
+    case "$opt" in
+        h)
+            _run_pyinstall -h; exit 1
+            ;;
+        i|r)
+            _search_path $PYBRAT_DEF_ROOTD
+            if [ -z $FIND_PATH ]; then
+                echo "==> ERROR: PyBrat is already installed. Uninstall first."
+                _err; exit $NOERR
+            fi
+
+            _check_req
+            if [[ "$NOERR" -ne "0" ]]; then
+                echo "==> ERROR (${NOERR}): Try reinstalling after fixing stuff."
+                exit $NOERR
+            fi
+            ;;
+    esac
+done
+
+# pre-parse the args before sending to python installer
+[[ "$#" == "0" ]] && ARG="-i" || ARG="$1"
+
+# otherwise, send the args on to python installer ...
+_run_pyinstall $ARG
+
+exit

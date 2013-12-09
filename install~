@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 
 
+# USER CONFIGURABLE DEFAULTS FOR HACKS (pyenv, etc.)
+source ./etc/hacks.cfg
+
+
 # required and default variables
 NOERR=0
 FIND_PATH=1
-
 REQ_PYVER='2.7'
-DEF_PYENV="${HOME}/.pyenv"
-DEF_PYBREW="${HOME}/.pythonbrew"
-PYBRAT_HOME="${HOME}/.pybrat"
+
 
 # split $PATH
 IFS=:
@@ -70,12 +71,12 @@ function _config_shrc_pybrew {
 # Check if 'pythonbrew' installed and if not, install.
 function _check_req_pybrew {
 
-    _search_path "${DEF_PYBREW}/bin"
+    _search_path "${PYBREW_DEF_ROOTD}/bin"
     [ -z $FIND_PATH ] && return
 
-    if [ -e "$DEF_PYBREW" ]; then
+    if [ -e "$PYBREW_DEF_ROOTD" ]; then
 	echo "==> WARNING: 'pythonbrew' installed but not configured."
-	echo "Did you configure your shell script and type `exec $SHELL`?"
+	echo "Did you configure your shell script and type 'exec $SHELL'?"
         _config_shrc_pybrew
 	_err; return
     fi
@@ -88,7 +89,7 @@ function _check_req_pybrew {
     # ... so curl it all to defaults
     echo
     curl -kL http://xrl.us/pythonbrewinstall | bash
-    if [ ! -e "${DEF_PYBREW}" ]; then
+    if [ ! -e "${PYBREW_DEF_ROOTD}" ]; then
 	echo "==> ERROR: 'pythonbrew' did not install correctly."
 	_err; return
     fi
@@ -105,7 +106,7 @@ function _config_shrc_pyenv {
     echo; read -p "Configure 'pyenv' for your shell? [y/N]: "
     if [[ "$REPLY" != "y" ]]; then
         printf "\n==> ERROR: 'pyenv' needs to be configured to work!\n"
-        echo "Read the 'README.md' located in the '${DEF_PYENV}' directory."
+        echo "Read the 'README.md' located in the '${PYENV_DEF_ROOTD}' directory."
 	_err; return
     fi
 
@@ -141,15 +142,15 @@ function _config_shrc_pyenv {
 function _check_req_pyenv {
 
 ###########333
-    spath="${DEF_PYENV}/bin"
+    spath="${PYENV_DEF_ROOTD}/bin"
     _search_path $spath
-    echo "$DEF_PYENV $FIND_PATH"
+    echo "$PYENV_DEF_ROOTD $FIND_PATH"
     [[ "$FIND_PATH" -eq "0" ]] && return
 
     # check for .pyenv directory in case installed but not config'd
-    if [ -e "$DEF_PYENV" ]; then
+    if [ -e "$PYENV_DEF_ROOTD" ]; then
         echo "==> ERROR: 'pyenv' installed but not configured."
-        echo "Did you read the 'README.md' in '${DEF_PYENV}'?"
+        echo "Did you read the 'README.md' in '${PYENV_DEF_ROOTD}'?"
         _config_shrc_pyenv
 	_err; return
     fi
@@ -161,14 +162,14 @@ function _check_req_pyenv {
     
     # ... so clone it all from github
     echo
-    git clone git://github.com/yyuu/pyenv.git $DEF_PYENV
-    if [ ! -e "$DEF_PYENV" ]; then
+    git clone git://github.com/yyuu/pyenv.git $PYENV_DEF_ROOTD
+    if [ ! -e "$PYENV_DEF_ROOTD" ]; then
         echo "==> ERROR: 'pyenv' did not install correctly."
 	_err; return
     fi
     echo
-    git clone git://github.com/yyuu/pyenv-virtualenv.git ${DEF_PYENV}/plugins/pyenv-virtualenv
-    if [ ! -e "${DEF_PYENV}/plugins/pyenv-virtualenv" ]; then
+    git clone git://github.com/yyuu/pyenv-virtualenv.git ${PYENV_DEF_ROOTD}/plugins/pyenv-virtualenv
+    if [ ! -e "${PYENV_DEF_ROOTD}/plugins/pyenv-virtualenv" ]; then
         echo "==> ERROR: 'pyenv-virtualenv' did not install correctly."
 	_err; return
     fi
@@ -179,12 +180,12 @@ function _check_req_pyenv {
 
 
 
-# want to run pybrat in pyenv-virtualenv w/ python2 and pip-2.7
+# using only Python 2.7, for now ...
 function _check_req_pyver {
 
     local pyver=`which python${REQ_PYVER}`
 
-    [[ "$pyver" == *"$REQ_PYVER"* && "$pyver" == *"$DEF_PYENV"* ]] && return
+    [[ "$pyver" == *"$REQ_PYVER"* && "$pyver" == *"$PYENV_DEF_ROOTD"* ]] && return
 
     echo "==> ERROR: This version of PyBrat requires a pyenv-virtualenv with Python-${REQ_PYVER}."
     read -p "Bootstrap Python-${REQ_PYVER} with 'pyenv'? [y/N]: "
@@ -207,8 +208,8 @@ function _check_req {
 
 # make sure the python installer exists first, then run it
 function _run_pyinstall {
-    if [ -e "${PWD}/scripts/pybrat_install.py" ]; then 
-        /usr/bin/python2 "${PWD}/scripts/pybrat_install.py" $@
+    if [ -e "${PWD}/scripts/pybrat_install" ]; then 
+        python "${PWD}/scripts/pybrat_install" $@
     else
         echo "Install module not found."
     fi
@@ -229,7 +230,7 @@ while getopts "hirud" opt; do
             _run_pyinstall -h; exit 1
             ;;
         i|r)
-            _search_path $PYBRAT_HOME
+            _search_path $PYBRAT_DEF_ROOTD
             if [ -z $FIND_PATH ]; then
                 echo "==> ERROR: PyBrat is already installed. Uninstall first."
                 _err; exit $NOERR
