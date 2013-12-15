@@ -28,7 +28,7 @@ function _err {
 
 
 
-# Function to check $PATH for given path
+# Function to check $PATH for given path. use $FIND_PATH abs. next
 function _search_path {
 
     for dir in $DIRS; do
