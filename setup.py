@@ -12,7 +12,11 @@ setup(
     name='pybrat',
     version=PYBRAT_VER,
     packages=['pybrat', 'pybrat.installer', 'pybrat.subcommands', 'pybrat.hacks',],
-    scripts=['pybrat_install.py', 'pybrat_main.py',],
+    scripts=['pybrat_main.py',],
+    data_files=[ ('', ['data/bashrc', 'data/hacks.cfg']),
+                 ('hooks', ['data/hooks/preactivate.skel', 'data/hooks/postactivate.skel',
+                            'data/hooks/predeactivate.skel', 'data/hooks/postdeactivate.skel']),
+                 ],
 
     keywords='python',
     description=PYBRAT_PROG_DESCRIPTION,

@@ -32,8 +32,7 @@ function _err {
 function _search_path {
 
     for dir in $DIRS; do
-#############3333
-        echo "$dir =? $1"
+#############3333        echo "$dir =? $1"
         if [[ "$dir" == *"$1"* ]]; then 
             # found the dir in the $PATH so return found
             if [[ -d "$dir" ]]; then
@@ -208,8 +207,8 @@ function _check_req {
 
 # make sure the python installer exists first, then run it
 function _run_pyinstall {
-    if [ -e "./bin/pybrat_install" ]; then 
-        exec "./bin/pybrat_install" $@
+    if [ -e "./pybrat_install.py" ]; then 
+        exec "./pybrat_install.py" $@
     else
         echo "Install module not found."
     fi
