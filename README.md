@@ -1,35 +1,62 @@
 PyBrat
 ======
 
-pybrat - python project manager and pythonbrew commander
+pybrat - python project manager with virtualenv support
 
-The Wannabe-Ultimate Python Commander and Virtualenv Wrangler.
-Manage your python projects' source directories, python versions and
-pythonbrew virtualenvs. Command pythonbrew using your pybrat project.
-Intended to centralize and simplify common pythonic activities.
+Manage your python projects' source directories, python versions and pythonbrew virtualenvs using one command.
+Manage your linked source code projects using pythonbrew (deprecated), pyenv, virtualenv and/or virtualenvwrapper. 
 
 Usage
 -----
 
     pybrat [OPTION] {COMMAND} [OPTION]... [ARGS]...
 
+Dependencies
+------------
+
+This version of `pybrat` requires the following:
+
+    * python2.7
+    * pyenv
+    * pythonbrew (deprecated)
+    * virtualenv
+    * virtualenvwrapper
+
 Installation
 ------------
 
-    $ git clone git@github.com:joseph8th/pybrat.git
+It is **strongly advised** that you use the `install` shell (bash) script to install, uninstall or upgrade `pybrat`.
+There may be future updates to the structure and contents of the project link directory, which `install` will make
+before updating `pybrat` source files.
 
-    $ cd ./pybrat
+Before installing `pybrat`, the interactive `install` script checks dependencies, and will prompt the user to install
+and configure each them in default locations. If dependencies are already met, you can still use the `-i` option to 
+install and check configuration.
 
-    $ ./pybrat-install -i
+    $ git clone git@github.com:joseph8th/pybrat.git ~/.pybrat
 
-To uninstall or reinstall, use the `-u` or `-r` options. See `-h` for `--help`.
+    $ cd ~/.pybrat
+
+    $ ./install -i
+
+Use the `-u` or `-r` options to uninstall or reinstall, respectively. 
+
+Use the `-d` option to uninstall *and* delete the user project *links* directory 
+(does **not** touch original project source files).
+
+Use `-h` for `--help`.
+
+Usage
+-----
+
+    $ pybrat {ls, init, mk, rm, use}
 
 Commands
 --------
 
     {list,init,mk,rm,use}
 
-    list    List all pybrat projects (optional: list virtualenvs).
+    ls      List all pybrat projects (optional: list virtualenvs).
 
         optional arguments:
           -b, --brew            list pythonbrew virtualenvs
@@ -92,7 +119,7 @@ Examples
 Known Bugs
 ----------
 
-    * Uses deprecated os.system call to create the subshell.
+    * Uses deprecated os.system call to create the subshell for pythonbrew.
     * Doesn't really communicate with pythonbrew in subprocess calls.
 
 Changelog

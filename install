@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 
-
-# USER CONFIGURABLE DEFAULTS FOR HACKS (pyenv, etc.)
 source ./etc/hacks.cfg
-
 
 # required and default variables
 NOERR=0
 FIND_PATH=1
-REQ_PYVER='2.7'
 
+REQ_PYVER='2.7'
+PYBRAT_DEF_INSTALL=/home/${USER}/.pybrat
+PYBRAT_DEF_COMMANDD=/usr/local
 
 # split $PATH
 IFS=:
@@ -18,7 +17,6 @@ DIRS=
 read DIRS <<END
 $PATH
 END
-
 
 
 # Error logging
@@ -32,7 +30,6 @@ function _err {
 function _search_path {
 
     for dir in $DIRS; do
-#############3333        echo "$dir =? $1"
         if [[ "$dir" == *"$1"* ]]; then 
             # found the dir in the $PATH so return found
             if [[ -d "$dir" ]]; then
@@ -40,13 +37,12 @@ function _search_path {
             fi
         fi
     done
-
     # else not found
     FIND_PATH=1
 }
 
 
-
+# Function to configure shell configuration for pythonbrew if user wants
 function _config_shrc_pybrew {
 
     echo; read -p "Configure 'pythonbrew' in your '~/.bashrc'? [y/N]: "
@@ -74,14 +70,14 @@ function _check_req_pybrew {
     [ -z $FIND_PATH ] && return
 
     if [ -e "$PYBREW_DEF_ROOTD" ]; then
-	echo "==> WARNING: 'pythonbrew' installed but not configured."
+	echo "==> ERROR: 'pythonbrew' installed but not configured."
 	echo "Did you configure your shell script and type 'exec $SHELL'?"
         _config_shrc_pybrew
 	_err; return
     fi
 
     # good to install ...
-    echo "==> ERROR: This (development) version still requires (deprecated) 'pythonbrew'."
+    echo "==> This (development) version still requires (deprecated) 'pythonbrew'."
     read -p "Use 'curl' to install 'pythonbrew' to defaults? [y/N]: "
     [[ "$REPLY" != "y" ]] && _err && return
 
@@ -93,8 +89,7 @@ function _check_req_pybrew {
 	_err; return
     fi
 
-    _config_shrc_pybrew
-    _err; return
+    return
 }
 
 
@@ -140,10 +135,9 @@ function _config_shrc_pyenv {
 # Check if 'pyenv' and plugins are installed and if not, install.
 function _check_req_pyenv {
 
-###########333
+    # see if pyenv already installed and return if so
     spath="${PYENV_DEF_ROOTD}/bin"
     _search_path $spath
-    echo "$PYENV_DEF_ROOTD $FIND_PATH"
     [[ "$FIND_PATH" -eq "0" ]] && return
 
     # check for .pyenv directory in case installed but not config'd
@@ -155,7 +149,7 @@ function _check_req_pyenv {
     fi
 
     # good to install here ...
-    echo "==> ERROR: This version of PyBrat requires 'pyenv'."
+    echo "==> This version of PyBrat requires 'pyenv'."
     read -p "Use 'git' to clone and install 'pyenv' to defaults? [y/N]: "
     [[ "$REPLY" != "y" ]] && _err && return
     
@@ -186,32 +180,140 @@ function _check_req_pyver {
 
     [[ "$pyver" == *"$REQ_PYVER"* && "$pyver" == *"$PYENV_DEF_ROOTD"* ]] && return
 
-    echo "==> ERROR: This version of PyBrat requires a pyenv-virtualenv with Python-${REQ_PYVER}."
+    echo "==> This version of PyBrat requires a pyenv Python-${REQ_PYVER}."
     read -p "Bootstrap Python-${REQ_PYVER} with 'pyenv'? [y/N]: "
     [[ "$choice" != "y" ]] && _err && return
 
+############33333
     # then install a pyenv-virtualenv ...
+    echo "Installing 'python${REQ-PYVER}' ..."
 
 }
 
+
+# configure the shell script for pybrat
+function _config_shrc_pybrat {
+
+    echo; read -p "Configure 'pybrat' in your '~/.bashrc'? [y/N]: "
+    if [[ "$REPLY" != "y" ]]; then
+	printf "\n==> 'pybrat' needs to be configured to work!\n"
+	_err; return
+    fi
+
+    printf "\n# 'pybrat' environment configuration\n" >> ${HOME}/.bashrc
+    echo "[[ -s ${HOME}/.pybrat/data/bashrc ]] && source ${HOME}/.pybrat/data/bashrc" \
+	>> ${HOME}/.bashrc
+
+    echo; echo '==> DONE! You need to restart your shell. Type `exec $SHELL`.'
+    printf "(On uninstall, delete 'pybrat' section from '${HOME}/.bashrc'.)\n\n"
+
+    return
+}
 
 
 # check for required dependencies
-function _check_req {
-    [[ "$NOERR" -ne "0" ]] && return || _check_req_pyenv
+function _check_requirements {
+
+    # install and config pyenv if user wants
+    _check_req_pyenv
+    [[ "$NOERR" -ne "0" ]] && return || _config_shrc_pyenv
+
+    # use pyenv to boostrap req py ver if user wants
     [[ "$NOERR" -ne "0" ]] && return || _check_req_pyver
-    [[ "$NOERR" -ne "0" ]] && return || _check_req_pybrew
+
+    # must have req python version for the rest, so return if not
+    [[ "$NOERR" -ne "0" ]] && return
+    
+    # deprecated but needed for migration to pyenv
+    _check_req_pybrew
+    _config_shrc_pybrew
 }
 
 
 
-# make sure the python installer exists first, then run it
-function _run_pyinstall {
-    if [ -e "./pybrat_install.py" ]; then 
-        exec "./pybrat_install.py" $@
-    else
-        echo "Install module not found."
+#### Command line option functions. ####
+
+# shell based installer
+function _run_shinstall {
+
+    # make sure it's not already installed correctly
+    _search_path $PYBRAT_DEF_ROOTD
+    if [ -z $FIND_PATH ]; then
+        echo "==> ERROR: PyBrat is already installed. Uninstall first."
+        _err; return
     fi
+
+    # check for existing user command
+    if [ -e ${PYBRAT_DEF_COMMANDD}/pybrat ]; then
+        echo "==> ERROR (${NOERR}): must remove old command in '${PYBRAT_DEF_COMMANDF}' first."
+        _err
+    fi
+    
+    # make sure all dependencies satisfied fully
+    _check_requirements
+
+    if [[ "$NOERR" -ne "0" ]]; then
+        echo "==> ERROR (${NOERR}): Try reinstalling after fixing (${NOERR}) errors."
+        _err; return
+    fi
+
+    # ok then first run 'python setup.py install' to install file struct in '~/.pybrat'
+    if [[ "$PWD" -ne "$PYBRAT_DEF_ROOTD" ]]; then
+        echo "Running setup.py ..."
+        if [ -e "./setup.py" ]; then
+            exec "./python${REQ_PYVER} setup.py install"
+        else
+            echo "==> ERROR: 'setup.py' not found."
+            _err; return
+        fi
+    fi
+
+    # then make the project links directory in '~/.config' (creating if not existent)
+    if [ ! -e "$PYBRAT_DEF_PROJD" ]; then
+        echo "Creating project links directory ..."
+        mkdir -p $PYBRAT_DEF_PROJD
+    fi
+
+    # now install the user command 
+    echo "sudo ln -s ${PYBRAT_DEF_MAINF} ${PYBRAT_DEF_COMMANDD}/pybrat"
+
+    # now req perm to append user shell config script ie .bashrc
+    _config_shrc_pybrat
+}
+
+
+# shell based uninstaller
+function _run_shuninstall {
+
+    # make sure it's installed
+    _search_path ${PYBRAT_DEF_ROOTD}
+    if [ -z $FIND_PATH ]; then
+        echo "Uninstalling 'pybrat' ..."
+        rm -rf $PYBRAT_DEF_ROOTD
+    else
+        echo "Not installed. Nothing to do."
+    fi
+}
+
+
+# shell based delete
+function _run_shdelete {
+
+    # make sure projects directory exists
+    _search_path ${PYBRAT_DEF_PROJD}
+    if [ -z $FIND_PATH ]; then
+        echo "Deleting symbolic links to project directories ..."
+        rm -rf $PYBRAT_DEF_PROJD
+    else
+        echo "Project links directory not found. Nothing to do."
+    fi
+}
+
+
+# help function
+function _run_help {
+    echo "usage: install [-h | -i | -r | -u | -d]"
+    echo "See 'README.md' for more information."
 }
 
 
@@ -220,34 +322,36 @@ function _run_pyinstall {
 #                    MAIN                   #
 #===========================================#
 
-ARG=
 OPTIND=1
 
 while getopts "hirud" opt; do
     case "$opt" in
-        h)
-            _run_pyinstall -h; exit 1
+        i)
+            _run_shinstall
+            exit $NOERR
             ;;
-        i|r)
-            _search_path $PYBRAT_DEF_ROOTD
-            if [ -z $FIND_PATH ]; then
-                echo "==> ERROR: PyBrat is already installed. Uninstall first."
-                _err; exit $NOERR
-            fi
-
-            _check_req
-            if [[ "$NOERR" -ne "0" ]]; then
-                echo "==> ERROR (${NOERR}): Try reinstalling after fixing stuff."
-                exit $NOERR
-            fi
+        r) 
+            _run_shuninstall
+            [[ "$NOERR" -eq "0" ]] && _run_shinstall
+            exit $NOERR
+            ;;
+        u)
+            _run_shuninstall
+            exit $NOERR
+            ;;
+        d)
+            -run_shuninstall
+            _run_shdelete
+            exit $NOERR
+            ;;
+        *)
+            _run_help
+            exit 1
             ;;
     esac
 done
 
-# pre-parse the args before sending to python installer
-[[ "$#" == "0" ]] && ARG="-i" || ARG="$1"
+# DEPRECATED: otherwise, send the args on to python installer ...
+#_run_pyinstall $ARG
 
-# otherwise, send the args on to python installer ...
-_run_pyinstall $ARG
-
-exit
+exit $NOERR
