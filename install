@@ -11,7 +11,7 @@ read DIRS <<END
 $PATH
 END
 
-source ./etc/pybrat.cfg
+source ./data/pybrat.cfg
 
 # get the app-spec install-config vars & functions
 source ./pybrat/hacks/hacks.sh
@@ -58,7 +58,9 @@ function _check_req_pyver {
 
 ############33333
     # then install a pyenv-virtualenv ...
-    echo "Installing 'python${REQ-PYVER}' ..."
+    echo "Bootstrapping 'python${REQ_PYVER}' to use locally ..."
+    exec "pyenv install ${REQ_PYVER}"
+    exec "pyenv local ${REQ_PYVER}"
 }
 
 
@@ -116,7 +118,7 @@ function _run_shinstall {
         fi
     fi
 
-    # then make the project links directory in '~/.config' (creating if not existent)
+    # then make the project links in '~/.config' (creating if not existent)
     if [ ! -e "$PYBRAT_DEF_PROJD" ]; then
         echo "Creating project links directory ..."
         mkdir -p $PYBRAT_DEF_PROJD
