@@ -4,9 +4,8 @@
 NOERR=0
 FIND_PATH=1
 
-# split $PATH
+# split $PATH for _search_path function
 IFS=:
-
 DIRS=
 read DIRS <<END
 $PATH
@@ -20,6 +19,7 @@ source ./pybrat/hacks/pyenv/pyenv.sh
 source ./pybrat/hacks/brew/brew.sh
 
 
+
 # Error logging
 function _err {
     let NOERR=NOERR+1
@@ -27,7 +27,7 @@ function _err {
 
 
 
-# Function to check $PATH for given path. use $FIND_PATH abs. next
+# Function to check $PATH for given peath. use $FIND_PATH abs. next
 function _search_path {
 
     for dir in $DIRS; do
@@ -42,23 +42,23 @@ function _search_path {
     FIND_PATH=1
 }
 
-
+ 
 
 # using only Python 2.7, for now ...
 function _check_req_pyver {
 
     local pyver=`which python${REQ_PYVER}`
-
-    [[ "$pyver" == *"$REQ_PYVER"* && "$pyver" == *"$PYENV_DEF_ROOTD"* ]] && return
+    if [[ "$pyver" == *"$REQ_PYVER"* ]] && [[ "$pyver" == *"$PYENV_DEF_ROOTD"* ]]
+    then; return
+    fi
 
     echo "==> This version of PyBrat requires a pyenv Python-${REQ_PYVER}."
-    read -p "Bootstrap Python-${REQ_PYVER} with 'pyenv'? [y/N]: "
-    [[ "$choice" != "y" ]] && _err && return
+    read -p "Bootstrap Python-${REQ_PYVER} with 'pyenv'? [y/N]: " 
+    [[ "$REPLY" != "y" ]] && _err && return
 
 ############33333
     # then install a pyenv-virtualenv ...
     echo "Installing 'python${REQ-PYVER}' ..."
-
 }
 
 
@@ -91,18 +91,11 @@ function _check_requirements {
 function _run_shinstall {
 
     # make sure it's not already installed correctly
-    _search_path $PYBRAT_DEF_ROOTD
-    if [ -z $FIND_PATH ]; then
+    if [[ -e "${PYBRAT_DEF_ROOTD}" ]] || [[ -e "${PYBRAT_DEF_COMMANDD}/pybrat" ]]; then
         echo "==> ERROR: PyBrat is already installed. Uninstall first."
         _err; return
     fi
 
-    # check for existing user command
-    if [ -e ${PYBRAT_DEF_COMMANDD}/pybrat ]; then
-        echo "==> ERROR (${NOERR}): must remove old command in '${PYBRAT_DEF_COMMANDF}' first."
-        _err
-    fi
-    
     # make sure all dependencies satisfied fully
     _check_requirements
 
@@ -111,8 +104,9 @@ function _run_shinstall {
         _err; return
     fi
 
-    # ok then first run 'python setup.py install' to install file struct in '~/.pybrat'
+    # then we can install the default '~/.pybrat' dir
     if [[ "$PWD" -ne "$PYBRAT_DEF_ROOTD" ]]; then
+        # if not already in ~/.pybrat, then use setup.py to install the files
         echo "Running setup.py ..."
         if [ -e "./setup.py" ]; then
             exec "./python${REQ_PYVER} setup.py install"
@@ -129,7 +123,7 @@ function _run_shinstall {
     fi
 
     # now install the user command 
-    echo "sudo ln -s ${PYBRAT_DEF_MAINF} ${PYBRAT_DEF_COMMANDD}/pybrat"
+    sudo ln -s "${PYBRAT_DEF_MAINF}" "${PYBRAT_DEF_COMMANDD}/pybrat"
 
     # now req perm to append user shell config script ie .bashrc
     _config_shrc_pybrat
@@ -140,11 +134,10 @@ function _run_shinstall {
 function _run_shuninstall {
 
     # make sure it's installed
-    _search_path ${PYBRAT_DEF_ROOTD}
-    if [ -z $FIND_PATH ]; then
+    if [ -e ${PYBRAT_DEF_ROOTD} ]; then
         echo "Uninstalling 'pybrat' ..."
-        rm -rf $PYBRAT_DEF_ROOTD
-        sudo rm ${PYBRAT_DEF_COMMANDD}/pybrat
+        rm -rf "$PYBRAT_DEF_ROOTD"
+        sudo rm "${PYBRAT_DEF_COMMANDD}/pybrat"
     else
         echo "Not installed. Nothing to do."
     fi
@@ -158,7 +151,7 @@ function _run_shdelete {
     _search_path ${PYBRAT_DEF_PROJD}
     if [ -z $FIND_PATH ]; then
         echo "Deleting symbolic links to project directories ..."
-        rm -rf $PYBRAT_DEF_PROJD
+        rm -rf "$PYBRAT_DEF_PROJD"
     else
         echo "Project links directory not found. Nothing to do."
     fi
@@ -181,6 +174,10 @@ OPTIND=1
 
 while getopts "hirud" opt; do
     case "$opt" in
+        h)
+            _run_help
+            exit 1
+            ;;
         i)
             _run_shinstall
             exit $NOERR
@@ -199,14 +196,7 @@ while getopts "hirud" opt; do
             _run_shdelete
             exit $NOERR
             ;;
-        *)
-            _run_help
-            exit 1
-            ;;
     esac
 done
-
-# DEPRECATED: otherwise, send the args on to python installer ...
-#_run_pyinstall $ARG
 
 exit $NOERR

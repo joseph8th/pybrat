@@ -19,7 +19,7 @@ function _config_shrc_pyenv {
     echo; read -p "Configure 'pyenv' for your shell? [y/N]: "
     if [[ "$REPLY" != "y" ]]; then
         printf "\n==> ERROR: 'pyenv' needs to be configured to work!\n"
-        echo "Read the 'README.md' located in the '${PYENV_DEF_ROOTD}' directory."
+        echo "Read the 'README.md' in '${PYENV_DEF_ROOTD}'."
 	_err; return
     fi
 
