@@ -11,7 +11,7 @@ read DIRS <<END
 $PATH
 END
 
-source ./data/pybrat.cfg
+source ./etc/pybrat.cfg
 
 # get the app-spec install-config vars & functions
 source ./pybrat/hacks/hacks.sh
@@ -48,8 +48,8 @@ function _search_path {
 function _check_req_pyver {
 
     local pyver=`which python${REQ_PYVER}`
-    if [[ "$pyver" == *"$REQ_PYVER"* ]] && [[ "$pyver" == *"$PYENV_DEF_ROOTD"* ]]
-    then; return
+    if [[ "$pyver" == *"$REQ_PYVER"* ]] && [[ "$pyver" == *"$PYENV_DEF_ROOTD"* ]]; then
+        return
     fi
 
     echo "==> This version of PyBrat requires a pyenv Python-${REQ_PYVER}."
@@ -72,17 +72,13 @@ function _check_requirements {
 
     # install and config pyenv if user wants
     _check_req_pyenv
-    [[ "$NOERR" -ne "0" ]] && return || _config_shrc_pyenv
-
+ 
     # use pyenv to boostrap req py ver if user wants
-    [[ "$NOERR" -ne "0" ]] && return || _check_req_pyver
+    [[ "$NOERR" != "0" ]] && return || _check_req_pyver
 
     # must have req python version for the rest, so return if not
-    [[ "$NOERR" -ne "0" ]] && return
-    
     # deprecated but needed for migration to pyenv
-    _check_req_pybrew
-    _config_shrc_pybrew
+    [[ "$NOERR" != "0" ]] && return || _check_req_brew
 }
 
 
@@ -102,7 +98,7 @@ function _run_shinstall {
     _check_requirements
 
     if [[ "$NOERR" -ne "0" ]]; then
-        echo "==> ERROR (${NOERR}): Try reinstalling after fixing (${NOERR}) errors."
+        echo "==> ERROR (${NOERR}): try after fixing (${NOERR}) problems."
         _err; return
     fi
 

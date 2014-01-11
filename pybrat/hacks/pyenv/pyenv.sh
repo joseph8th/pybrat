@@ -42,8 +42,13 @@ function _config_shrc_pyenv {
     echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ${HOME}/${sh}
     echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ${HOME}/${sh}
     echo 'eval "$(pyenv init -)"' >> ${HOME}/${sh}
-    
-    echo; echo '==> DONE! You need to restart your shell. Type `exec $SHELL`.'
+
+    # perform the config for this shell session
+    export PYENV_ROOT="$HOME/.pyenv"
+    export PATH="$PYENV_ROOT/bin:$PATH"
+    eval "$(pyenv init -)"
+
+    echo '==> DONE! You may need to restart your shell. Type `exec $SHELL`.'
     printf "(On uninstall, delete 'pyenv' section from '${HOME}/${sh}'.)\n\n"
 
     return
@@ -55,9 +60,11 @@ function _config_shrc_pyenv {
 function _check_req_pyenv {
 
     # see if pyenv already installed and return if so
-    spath="${PYENV_DEF_ROOTD}/bin"
-    _search_path $spath
-    [[ "$FIND_PATH" -eq "0" ]] && return
+    _search_path "$PYENV_DEF_ROOTD"
+    echo $FIND_PATH
+    if [[ "$FIND_PATH" == "0" ]]; then
+        return
+    fi
 
     # check for .pyenv directory in case installed but not config'd
     if [ -e "$PYENV_DEF_ROOTD" ]; then

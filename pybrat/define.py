@@ -26,7 +26,7 @@ def get_pybrat_root(use_def=False):
 # Pybrat root directories
 PYBRAT_ROOT = get_pybrat_root()
 PYBRAT_MAINF = path.join(PYBRAT_ROOT, "{}.py".format(PYBRAT_PROG))
-PYBRAT_ETCD = path.join(PYBRAT_ROOT, "data")
+PYBRAT_ETCD = path.join(PYBRAT_ROOT, "etc")
 PYBRAT_HOOKSD = path.join(PYBRAT_ETCD, "hooks")
 
 # Pybrat Python package source directories

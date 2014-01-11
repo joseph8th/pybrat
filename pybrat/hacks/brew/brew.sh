@@ -8,7 +8,7 @@ PYBREW_DEF_VENVD=~/.pythonbrew/venvs
 AVAIL_MGRS="pymgr venvmgr"
 
 # Function to configure shell configuration for pythonbrew if user wants
-function _config_shrc_pybrew {
+function _config_shrc_brew {
 
     echo; read -p "Configure 'pythonbrew' in your '~/.bashrc'? [y/N]: "
     if [[ "$REPLY" != "y" ]]; then
@@ -20,7 +20,7 @@ function _config_shrc_pybrew {
     echo "[[ -s ${HOME}/.pythonbrew/etc/bashrc ]] && source ${HOME}/.pythonbrew/etc/bashrc" \
 	>> ${HOME}/.bashrc
 
-    echo; echo '==> DONE! You need to restart your shell. Type `exec $SHELL`.'
+    echo '==> DONE! You need to restart your shell. Type `exec $SHELL`.'
     printf "(On uninstall, delete 'pythonbrew' section from '${HOME}/.bashrc'.)\n\n"
 
     return
@@ -29,20 +29,20 @@ function _config_shrc_pybrew {
 
 
 # Check if 'pythonbrew' installed and if not, install.
-function _check_req_pybrew {
+function _check_req_brew {
 
     _search_path "${PYBREW_DEF_ROOTD}/bin"
-    [ -z $FIND_PATH ] && return
+    [[ "$FIND_PATH" == "0" ]] && return
 
     if [ -e "$PYBREW_DEF_ROOTD" ]; then
 	echo "==> ERROR: 'pythonbrew' installed but not configured."
 	echo "Did you configure your shell script and type 'exec $SHELL'?"
-        _config_shrc_pybrew
+        _config_shrc_brew
 	_err; return
     fi
 
     # good to install ...
-    echo "==> This (development) version still requires (deprecated) 'pythonbrew'."
+    echo "==> This version still requires (deprecated) 'pythonbrew'."
     read -p "Use 'curl' to install 'pythonbrew' to defaults? [y/N]: "
     [[ "$REPLY" != "y" ]] && _err && return
 
@@ -54,5 +54,6 @@ function _check_req_pybrew {
 	_err; return
     fi
 
+    _config_shrc_brew
     return
 }
