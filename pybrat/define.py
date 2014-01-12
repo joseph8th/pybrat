@@ -6,7 +6,7 @@ PYBRAT_PROG = "pybrat"
 PYBRAT_PROG_VER = "pybrat-%s" % (PYBRAT_VER)
 PYBRAT_PROG_DESCRIPTION="Wanna-Be Python Project Commander."
 
-PYBRAT_PYVER = "2.7"
+PYBRAT_PYVER = "2.7.5"
 
 PYBRAT_INSTALL_ROOT = path.join( environ['HOME'], ".%s" % (PYBRAT_PROG) )
 

@@ -1,11 +1,11 @@
 
 #[brew]
-PYBREW_DEF_ROOTD=~/.pythonbrew
-PYBREW_DEF_PYD=~/.pythonbrew/pythons
-PYBREW_DEF_VENVD=~/.pythonbrew/venvs
+PYBREW_DEF_ROOTD=/home/${USER}/.pythonbrew
+PYBREW_DEF_PYD=/home/${USER}/.pythonbrew/pythons
+PYBREW_DEF_VENVD=/home/${USER}/.pythonbrew/venvs
 
 #[mgrs]
-AVAIL_MGRS="pymgr venvmgr"
+PYBREW_AVAIL_MGRS="pymgr venvmgr"
 
 # Function to configure shell configuration for pythonbrew if user wants
 function _config_shrc_brew {
@@ -16,11 +16,13 @@ function _config_shrc_brew {
 	_err; return
     fi
 
-    printf "\n# 'pythonbrew' environment configuration\n" >> ${HOME}/.bashrc
-    echo "[[ -s ${HOME}/.pythonbrew/etc/bashrc ]] && source ${HOME}/.pythonbrew/etc/bashrc" \
-	>> ${HOME}/.bashrc
+    # write to ~/.bashrc
+    printf "\n# 'pythonbrew' environment configuration\n" >> /home/${USER}/.bashrc
+    echo "[[ -s ${HOME}/.pythonbrew/etc/bashrc ]] && source ${HOME}/.pythonbrew/etc/bashrc" >> /home/${USER}/.bashrc
+    # source in this shell session
+    source "${PYBREW_DEF_ROOTD}/etc/bashrc"
 
-    echo '==> DONE! You need to restart your shell. Type `exec $SHELL`.'
+    echo "==> DONE! You may need to restart your shell. Type 'exec $SHELL'."
     printf "(On uninstall, delete 'pythonbrew' section from '${HOME}/.bashrc'.)\n\n"
 
     return

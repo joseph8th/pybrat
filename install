@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 
+#set -x
+
 # required and default variables
 NOERR=0
 FIND_PATH=1
 
 # split $PATH for _search_path function
 IFS=:
+
 DIRS=
 read DIRS <<END
 $PATH
@@ -17,8 +20,6 @@ source ./etc/pybrat.cfg
 source ./pybrat/hacks/hacks.sh
 source ./pybrat/hacks/pyenv/pyenv.sh
 source ./pybrat/hacks/brew/brew.sh
-
-
 
 # Error logging
 function _err {
@@ -47,25 +48,29 @@ function _search_path {
 # using only Python 2.7, for now ...
 function _check_req_pyver {
 
-    local pyver=`which python${REQ_PYVER}`
-    if [[ "$pyver" == *"$REQ_PYVER"* ]] && [[ "$pyver" == *"$PYENV_DEF_ROOTD"* ]]; then
-        return
+    # see if correct python version already set in pyenv
+    local pyvers="$(pyenv versions)"
+    [[ "$pyvers" == *"* $PYBRAT_PROG "* ]] && return
+
+    # see if virtualenv in pyenv but not set to local
+    if [[ "$pyvers" == *"$PYBRAT_PROG"* ]]; then
+       pyenv local $PYBRAT_PROG
+       return
     fi
 
-    echo "==> This version of PyBrat requires a pyenv Python-${REQ_PYVER}."
+    echo "==> 'pybrat' requires a pyenv virtualenv with Python-${REQ_PYVER}."
     read -p "Bootstrap Python-${REQ_PYVER} with 'pyenv'? [y/N]: " 
     [[ "$REPLY" != "y" ]] && _err && return
 
-############33333
-    # then install a pyenv-virtualenv ...
-    echo "Bootstrapping 'python${REQ_PYVER}' to use locally ..."
-    exec "pyenv install ${REQ_PYVER}"
-    exec "pyenv local ${REQ_PYVER}"
+    # otherwise install a 'pybrat' virtualenv in ~/.pybrat
+    echo "Installing virtualenv for '${PYENV_DEF_ROOTD}' ..."
+    pyenv virtualenv ${PYBRAT_PROG} pybrat ${PYENV_DEF_ROOTD}
+    pyenv local ${PYBRAT_PROG}
+
+    return
 }
 
 
-
-# intentionally specific hacks (plugins) install calls
 
 # check for required dependencies
 function _check_requirements {
@@ -85,11 +90,26 @@ function _check_requirements {
 
 #### Command line option functions. ####
 
+function _config_shrc_pybrat {
+
+    echo; read -p "Configure 'pybrat' in your '~/.bashrc'? [y/N]: "
+    if [[ "$REPLY" != "y" ]]; then
+        printf "\n==>ERROR: 'pybrat' needs to be configured to work!\n"
+        _err; return
+    fi
+
+    # write to !/.bashrc
+    printf "\n# 'pybrat' environment configuration\n" >> /home/${USER}/.bashrc
+    echo "[[ -s ${HOME}/.pybrat/etc/bashrc ]] && source ${HOME}/.pybrat/etc/bashrc" >> /home/${USER}/.bashrc
+    source "${PYBRAT_DEF_ROOTD}/etc/bashrc"
+}
+
+
 # shell based installer
 function _run_shinstall {
 
     # make sure it's not already installed correctly
-    if [[ -e "${PYBRAT_DEF_ROOTD}" ]] || [[ -e "${PYBRAT_DEF_COMMANDD}/pybrat" ]]; then
+    if [[ -e "${PYBRAT_DEF_ROOTD}" ]] && [[ -e "${PYBRAT_DEF_COMMANDD}/pybrat" ]]; then
         echo "==> ERROR: PyBrat is already installed. Uninstall first."
         _err; return
     fi
@@ -97,21 +117,23 @@ function _run_shinstall {
     # make sure all dependencies satisfied fully
     _check_requirements
 
-    if [[ "$NOERR" -ne "0" ]]; then
+    if [[ "$NOERR" != "0" ]]; then
         echo "==> ERROR (${NOERR}): try after fixing (${NOERR}) problems."
         _err; return
     fi
 
     # then we can install the default '~/.pybrat' dir
-    if [[ "$PWD" -ne "$PYBRAT_DEF_ROOTD" ]]; then
+    if [[ "$PWD" != "$PYBRAT_DEF_ROOTD" ]]; then
         # if not already in ~/.pybrat, then use setup.py to install the files
         echo "Running setup.py ..."
         if [ -e "./setup.py" ]; then
-            exec "./python${REQ_PYVER} setup.py install"
+            python${PYBRAT_PYVER} setup.py install
         else
             echo "==> ERROR: 'setup.py' not found."
             _err; return
         fi
+        # then change to install root dir
+        cd ${PYBRAT_DEF_ROOTD}
     fi
 
     # then make the project links in '~/.config' (creating if not existent)
@@ -136,6 +158,7 @@ function _run_shuninstall {
         echo "Uninstalling 'pybrat' ..."
         rm -rf "$PYBRAT_DEF_ROOTD"
         sudo rm "${PYBRAT_DEF_COMMANDD}/pybrat"
+        echo "Done! Remove the 'pybrat' section from your '~/.bashrc' file."
     else
         echo "Not installed. Nothing to do."
     fi
@@ -182,7 +205,7 @@ while getopts "hirud" opt; do
             ;;
         r) 
             _run_shuninstall
-            [[ "$NOERR" -eq "0" ]] && _run_shinstall
+            [[ "${NOERR}" ==  "0" ]] && _run_shinstall
             exit $NOERR
             ;;
         u)
@@ -190,7 +213,7 @@ while getopts "hirud" opt; do
             exit $NOERR
             ;;
         d)
-            -run_shuninstall
+            _run_shuninstall
             _run_shdelete
             exit $NOERR
             ;;
