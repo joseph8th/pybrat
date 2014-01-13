@@ -4,7 +4,7 @@ from os.path import join, exists, basename, islink, isfile, isdir, \
     splitext
 import shutil
 import subprocess
-from pybrat.define import *
+from define import *
 
 ### general purpose funcs ###
 
@@ -28,7 +28,6 @@ def load_module(name):
         __import__(name)
     except ImportError:
         print "Import Error."
-#        pass
 
         
 def get_module_list(pkgname, modpath):
@@ -60,28 +59,28 @@ def get_input_bool(question, default_answer):
     print "{}".format(PYBRAT_SHGRAY)
     ans = default_answer
     if ansstr:
-        if 'y' in ansstr.lower()[0]:
+        if ansstr.lower()[0] in ['y', 'Y']:
             ans = True
-        elif 'n' in ansstr.lower()[0]:
+        elif ansstr.lower()[0] in ['n', 'N']:
             ans = False
     return ans
         
 
 ### check if config is set ###
-def set_config():
-    retval = True
-    if not 'HOME' in os.environ:
-        retval = False
-    else:
-        if not isfile(PYBRAT_CMD):
-            print "Pybrat command script not found in pythonbrew path at:"
-            print "\t{}".format(PYBRAT_CMD)
-            retval = False
-        for p in [PYBRAT_CONFD, PYBRAT_MAIND, PYBRAT_PROJD]:
-            if not exists(p):
-                print "Directory not found at: {}".format(p)
-                retval = False
-    return retval
+#def set_config():
+#    retval = True
+#    if not 'HOME' in os.environ:
+#        retval = False
+#    else:
+#        if not isfile(PYBRAT_CMD):
+#            print "Pybrat command script not found in pythonbrew path at:"
+#            print "\t{}".format(PYBRAT_CMD)
+#            retval = False
+#        for p in [PYBRAT_CONFD, PYBRAT_MAIND, PYBRAT_PROJD]:
+#            if not exists(p):
+#                print "Directory not found at: {}".format(p)
+#                retval = False
+#    return retval
 
 
 ### file/dir utils ###
@@ -133,21 +132,8 @@ def pv_check_subd(pv_subd, args={}):
         return
 
     # if integrity check...
-    if 'all' in args:
-        args = {'hooks':True,}
-
-    # check if hooks dir is OK
-    if 'hooks' in args:
-        hooksd = join(pv_subd, "hooks")
-        if not exists(hooksd):
-            print "Creating 'hooks' dir at '{}'".format(hooksd)
-            if not pv_mkdirs(hooksd):
-                print_err("unable to create 'hooks' directory", 
-                          post_exit=True)
-            for f in os.listdir(PYBRAT_HOOKSD):
-                shutil.copy2(join(PYBRAT_HOOKSD, f), join(hooksd, f))
-                print "Copied:\t{0}\n\t==> {1}".format(
-                    join(PYBRAT_HOOKSD, f), join(hooksd, f))
+#    if 'all' in args:
+#        args = {'hooks':True,}
                             
     # check if multi-venv or multi-
     if 'vname' in args:
@@ -155,19 +141,11 @@ def pv_check_subd(pv_subd, args={}):
                      if 'python' in pyd.lower() 
                      and isdir(join(pv_subd,pyd))] 
         if old_pyd_l:
-            print "{}".format(PYBRAT_SHWHITE) + "%-9s" % "WARNING:" + \
-                "other Python(s) are already attached to this project!"
-            print  "{}".format(PYBRAT_SHGRAY) + "%-9s" % "OPTIONS:" + \
-                "(1) make '%s' a single-venv project, OR" % (args['proj'])
-            print "%-9s(2) add '%s' to a list in a multi-venv project.\n" \
-                % ("", args['vname'])
-            print "{}".format(PYBRAT_SHWHITE) + \
-                "[y]: YES, purge old links and replace with '%s'." \
-                % (args['vname'])
-            print "[N]: NO, don't purge and replace. " + \
-                "Add new venv '%s' to a list of linked venvs." & \
-                (args['vname'])
-            prompt = "Purge old venv links and replace with new one? [y/N]: "
+            print "==> WARNING: other Python(s) already linked to project."
+            prompt = "[y]: YES, purge old links and replace with '%s'.\n" \
+                     % (args['vname']) + \
+                     "[N]: NO, don't purge. Make multi-python project.\n" + \
+                     "Purge old links and replace with new one? [y/N]: "
             
             # if add venv to list then just return leaving .pybrat untouched
             if not get_input_bool(prompt, default_answer=False):

@@ -60,7 +60,7 @@ function _config_shrc_pyenv {
 function _check_req_pyenv {
 
     # see if pyenv already installed and return if so
-    _search_path "$PYENV_DEF_ROOTD"
+    search_path "$PYENV_DEF_ROOTD"
     [[ "$FIND_PATH" == "0" ]] && return
     
     # check for .pyenv directory in case installed but not config'd

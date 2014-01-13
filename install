@@ -6,49 +6,12 @@
 NOERR=0
 FIND_PATH=1
 
-OLDIFS=$IFS
-
-# split $PATH for _search_path function
-IFS=:
-
-DIRS=
-read DIRS <<END
-$PATH
-END
-
-# get allowed hacks etc. from pybrat.cfg
-source ./etc/pybrat.cfg
-
-# get the app-spec install-config vars & functions
-echo "Loading installers for hacks ..."
-INSTALL_HACKS=./etc/hacks/*.sh
-for hack in $INSTALL_HACKS; do
-    source $hack
-done
 
 # Error logging
 function _err {
     let NOERR=NOERR+1
 }
 
-
-
-# Function to check $PATH for given peath. use $FIND_PATH abs. next
-function _search_path {
-
-    for dir in $DIRS; do
-        if [[ "$dir" == *"$1"* ]]; then 
-            # found the dir in the $PATH so return found
-            if [[ -d "$dir" ]]; then
-                FIND_PATH=0; return
-            fi
-        fi
-    done
-    # else not found
-    FIND_PATH=1
-}
-
- 
 
 # using only Python 2.7, for now ...
 function _check_req_pyver {
@@ -191,37 +154,74 @@ function _run_help {
 
 
 
+#### main functions ####
+
+# parse command line options
+
+function _parse_opts {
+    OPTIND=1
+    while getopts "hirud" opt; do
+        case "$opt" in
+            h)
+                _run_help
+                exit 1
+                ;;
+            i)
+                _run_shinstall
+                exit $NOERR
+                ;;
+            r) 
+                _run_shuninstall
+                [[ "${NOERR}" ==  "0" ]] && _run_shinstall
+                exit $NOERR
+                ;;
+            u)
+                _run_shuninstall
+                exit $NOERR
+                ;;
+            d)
+                _run_shuninstall
+                _run_shdelete
+                exit $NOERR
+                ;;
+        esac
+    done
+
+    # otherwise spit out help
+    _run_help
+    exit 1
+}
+
+
 #===========================================#
 #                    MAIN                   #
 #===========================================#
 
-OPTIND=1
+OLDIFS=$IFS
 
-while getopts "hirud" opt; do
-    case "$opt" in
-        h)
-            _run_help
-            exit 1
-            ;;
-        i)
-            _run_shinstall
-            exit $NOERR
-            ;;
-        r) 
-            _run_shuninstall
-            [[ "${NOERR}" ==  "0" ]] && _run_shinstall
-            exit $NOERR
-            ;;
-        u)
-            _run_shuninstall
-            exit $NOERR
-            ;;
-        d)
-            _run_shuninstall
-            _run_shdelete
-            exit $NOERR
-            ;;
-    esac
+source ./etc/util.sh                # get search & cfg utils
+cfg_parser ./etc/pybrat.cfg         # parse 'pybrat.cfg'
+cfg.section.pybrat                  # get global settings
+#cfg_parser ./etc/pybrat.cfg
+cfg.section.hacks                   # get hacks settings
+
+# get the app-spec install-config vars & functions
+IFS=' '
+PYMGR_ARY=( `echo ${ALLOWED_PYMGRS[@]}` )
+for hack in ${PYMGR_ARY[@]}; do
+    source "./etc/hacks/${hack}.sh"
 done
+
+# split $PATH for search_path function
+IFS=:
+DIRS=
+read DIRS <<END
+$PATH
+END
+
+# parse command line options
+_parse_opts
+
+IFS=$OLDIFS
 
 exit $NOERR

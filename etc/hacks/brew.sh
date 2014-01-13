@@ -33,7 +33,7 @@ function _config_shrc_brew {
 # Check if 'pythonbrew' installed and if not, install.
 function _check_req_brew {
 
-    _search_path "${PYBREW_DEF_ROOTD}/bin"
+    search_path "${PYBREW_DEF_ROOTD}/bin"
     [[ "$FIND_PATH" == "0" ]] && return
 
     if [ -e "$PYBREW_DEF_ROOTD" ]; then
