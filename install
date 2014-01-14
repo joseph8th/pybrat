@@ -31,11 +31,16 @@ function _check_req_pyver {
     [[ "$REPLY" != "y" ]] && _err && return
 
     # otherwise install a 'pybrat' virtualenv in ~/.pybrat
-    echo "Installing virtualenv for '${PYENV_DEF_ROOTD}' ..."
-    pyenv virtualenv ${PYBRAT_PROG} pybrat ${PYENV_DEF_ROOTD}
-    pyenv local ${PYBRAT_PROG}
+    echo "Installing virtualenv for '${PYBRAT_DEF_ROOTD}' ..."
+    exec pyenv virtualenv "${REQ_PYVER}" "${PYBRAT_PROG}"
 
-    return
+    # make sure it worked
+    pyvers="$(pyenv versions)"
+    [[ "$pyvers" == *"$PYBRAT_PROG"* ]] && return
+
+    # otherwise something went wrong
+    echo "==> ERROR: virtualenv did not initialize correctly."
+    _err; return
 }
 
 
@@ -188,8 +193,8 @@ function _parse_opts {
     done
 
     # otherwise spit out help
-    _run_help
-    exit 1
+#    _run_help
+#    exit 1
 }
 
 
@@ -220,7 +225,7 @@ $PATH
 END
 
 # parse command line options
-_parse_opts
+_parse_opts $@
 
 IFS=$OLDIFS
 
