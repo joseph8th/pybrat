@@ -67,20 +67,20 @@ def get_input_bool(question, default_answer):
         
 
 ### check if config is set ###
-#def set_config():
-#    retval = True
-#    if not 'HOME' in os.environ:
-#        retval = False
-#    else:
-#        if not isfile(PYBRAT_CMD):
-#            print "Pybrat command script not found in pythonbrew path at:"
-#            print "\t{}".format(PYBRAT_CMD)
-#            retval = False
-#        for p in [PYBRAT_CONFD, PYBRAT_MAIND, PYBRAT_PROJD]:
-#            if not exists(p):
-#                print "Directory not found at: {}".format(p)
-#                retval = False
-#    return retval
+def set_config():
+    retval = True
+    if not 'HOME' in os.environ:
+        retval = False
+    else:
+        if not isfile(PYBRAT_CMD):
+            print "Pybrat command script not found in pythonbrew path at:"
+            print "\t{}".format(PYBRAT_CMD)
+            retval = False
+        for p in [PYBRAT_CONFD, PYBRAT_MAIND, PYBRAT_PROJD]:
+            if not exists(p):
+                print "Directory not found at: {}".format(p)
+                retval = False
+    return retval
 
 
 ### file/dir utils ###

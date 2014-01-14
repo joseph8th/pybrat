@@ -5,7 +5,7 @@ from pybrat.subcommand import load_subcommands
 
 def main():
     if not set_config():
-        exit("Pybrat not installed or configured. Run 'pybrat-install.py'.")
+        exit("Pybrat not installed or configured. Run 'install -i' first.")
     load_subcommands()
     args = parser.parse_args()
     args.command.run(args)

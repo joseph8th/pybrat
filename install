@@ -21,7 +21,7 @@ function _check_req_pyver {
     [[ "$pyvers" == *"* $PYBRAT_PROG "* ]] && return
 
     # see if virtualenv in pyenv but not set to local
-    if [[ "$pyvers" == *"$PYBRAT_PROG"* ]]; then
+    if [[ "$pyvers" == *"$PYBRAT_PROG"* ]] && [[ -e "$PYBRAT_PROG" ]]; then
        pyenv local $PYBRAT_PROG
        return
     fi
@@ -31,15 +31,17 @@ function _check_req_pyver {
     [[ "$REPLY" != "y" ]] && _err && return
 
     # otherwise install a 'pybrat' virtualenv in ~/.pybrat
-    echo "Installing virtualenv for '${PYBRAT_DEF_ROOTD}' ..."
-    exec pyenv virtualenv "${REQ_PYVER}" "${PYBRAT_PROG}"
+    echo "Installing Python-${REQ_PYVER} with 'pyenv' ..."
+    pyenv install ${REQ_PYVER}
+    pyvers="$(pyenv versions)"
+    [[ "$pyvers" != *"$REQ_PYVER"* ]] && _err && return
 
-    # make sure it worked
+    echo "Installing virtualenv for '${PYBRAT_DEF_ROOTD}' ..."
+    pyenv virtualenv "${REQ_PYVER}" "${PYBRAT_PROG}"
     pyvers="$(pyenv versions)"
     [[ "$pyvers" == *"$PYBRAT_PROG"* ]] && return
 
     # otherwise something went wrong
-    echo "==> ERROR: virtualenv did not initialize correctly."
     _err; return
 }
 
