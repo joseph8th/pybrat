@@ -38,15 +38,15 @@ function _check_req_brew {
 
     if [ -e "$PYBREW_DEF_ROOTD" ]; then
 	echo "==> ERROR: 'pythonbrew' installed but not configured."
-	echo "Did you configure your shell script and type 'exec $SHELL'?"
+	echo 'Did you configure your shell script and type `exec $SHELL`?'
         _config_shrc_brew
 	_err; return
     fi
 
     # good to install ...
-    echo "==> This version still requires (deprecated) 'pythonbrew'."
+    echo "==> This version supports migration from (deprecated) 'pythonbrew'."
     read -p "Use 'curl' to install 'pythonbrew' to defaults? [y/N]: "
-    [[ "$REPLY" != "y" ]] && _err && return
+    [[ "$REPLY" != "y" ]] && return
 
     # ... so curl it all to defaults
     echo

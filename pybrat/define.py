@@ -1,5 +1,4 @@
 from os import path
-#from ConfigParser import RawConfigParser
 
 # Basic program globals
 PYBRAT_VER = "0.2"
@@ -8,7 +7,6 @@ PYBRAT_PROG_VER = "pybrat-%s" % (PYBRAT_VER)
 PYBRAT_PROG_DESCRIPTION="Wanna-Be Python Project Commander."
 
 PYBRAT_PYVER = "2.7"
-
 
 # Pybrat root directories
 PYBRAT_ROOT = path.dirname(path.dirname(path.realpath(__file__)))
@@ -24,7 +22,7 @@ PYBRAT_HACKSD = path.join(PYBRAT_PROGD, "hacks")
 # User's 'home' project file directory
 PYBRAT_PROJD = path.join(PYBRAT_ROOT, "home")
 
-# prettify terminal
+# prettify terminal (to be ELIMINATED)
 PYBRAT_SHGREEN="\033[01;32m"
 PYBRAT_SHGRAY="\033[0;37m"
 PYBRAT_SHWHITE="\033[1;37m"

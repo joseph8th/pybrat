@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Pybrat bashrc settings for pythonbrew (deprecated)
+# Pybrat bashrc shell settings for pythonbrew (deprecated)
 
 PYBRAT_PATH_ROOT="$PYBRAT_CONFD"
 if [ -z "${PYBRAT_PATH_ROOT}" ] ; then
@@ -19,18 +19,18 @@ PYBRAT_HOOKS_DIR="$PYBRAT_PROJ_HOOKSD"
 
 __pybrat_set_default()
 {
-    PATH_PYBRAT="$PYBRAT_PATH_ROOT/bin"
+    PATH_PYBRAT="$PYBRAT_PATH_ROOT"
 }
 
-__pybrat_set_path()
-{
-    if [ -z "${PYBRAT_PATHS}" ]; then 
-        PATH_WITHOUT_PYBRAT=$(printf "$PATH" | awk -v RS=: -v ORS=: "/${PYBRAT_PATH_ROOT//\//\/}/ {next} {print}" | sed -e 's#:$##') 
-        export PATH=$PATH_PYBRAT:$PATH_WITHOUT_PYBRAT
-    else
-        export PATH=$PYBRAT_PATHS
-    fi
-}
+#__pybrat_set_path()
+#{
+#    if [ -z "${PYBRAT_PATHS}" ]; then 
+#        PATH_WITHOUT_PYBRAT=$(printf "$PATH" | awk -v RS=: -v ORS=: "/${PYBRAT_PATH_ROOT//\//\/}/ {next} {print}" | sed -e 's#:$##') 
+#        export PATH=$PATH_PYBRAT:$PATH_WITHOUT_PYBRAT
+#    else
+#        export PATH=$PYBRAT_PATHS
+#    fi
+#}
 
 __pybrat_set_python_path()
 {
@@ -102,7 +102,7 @@ __pybrat_activate_venv()
 
 # Pybrat bashrc main
 __pybrat_set_default
-__pybrat_set_path
+#__pybrat_set_path
 __pybrat_set_python_path
 __pybrat_chdir_workd
 __pybrat_activate_venv

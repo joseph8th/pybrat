@@ -26,7 +26,7 @@ function _check_req_pyver {
        return
     fi
 
-    echo "==> 'pybrat' requires a pyenv virtualenv with Python-${REQ_PYVER}."
+    echo "==> 'pybrat' requires a 'pyenv virtualenv' with Python-${REQ_PYVER}."
     read -p "Bootstrap Python-${REQ_PYVER} with 'pyenv'? [y/N]: " 
     [[ "$REPLY" != "y" ]] && _err && return
 
@@ -47,15 +47,18 @@ function _check_req_pyver {
 
 
 
-# check for required dependencies
+# check for required dependencies - intentional no auto-install of hacks
 function _check_requirements {
-    # install and config pyenv if user wants
-    _check_req_pyenv
+
+    # optional hacks
+    _check_req_brew           # deprecated but maybe wanted for migration
+#    _check_req_wrap
+ 
+   # install and config pyenv if user wants
+    [[ "$NOERR" != "0" ]] && return || _check_req_pyenv
+
     # use pyenv to boostrap req py ver if user wants
     [[ "$NOERR" != "0" ]] && return || _check_req_pyver
-    # must have req python version for the rest, so return if not
-    # deprecated but needed for migration to pyenv
-    [[ "$NOERR" != "0" ]] && return || _check_req_brew
 }
 
 
@@ -110,6 +113,15 @@ function _run_shinstall {
         cd ${PYBRAT_DEF_ROOTD}
     fi
 
+    # create a 'pyenv local' file pointing to 'pybrat' virtualenv
+    pyvers="$(pyenv versions)"
+    if [[ "$pyvers" != *"$PYBRAT_PROG"* ]]; then
+        echo "==> ERROR: '${PYBRAT_PROG}' virtualenv not found."
+        _err; return
+    fi
+
+    pyenv local $PYBRAT_PROG
+
     # then make the project links in '~/.config' (creating if not existent)
     if [ ! -e "$PYBRAT_DEF_PROJD" ]; then
         printf "Creating project links directory\n  --> $PYBRAT_DEF_PROJD\n"
@@ -120,7 +132,7 @@ function _run_shinstall {
     echo "Creating 'pybrat' command link in ${PYBRAT_DEF_COMMANDD} ..."
     sudo ln -s "${PYBRAT_DEF_MAINF}" "${PYBRAT_DEF_COMMANDD}/pybrat"
 
-    # now req perm to append user shell config script ie .bashrc
+    # now request permission to append user shell config script ie .bashrc
     _config_shrc_pybrat
 }
 
