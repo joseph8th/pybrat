@@ -1,4 +1,4 @@
-from os import path
+from os import environ, path
 
 # Basic program globals
 PYBRAT_VER = "0.2"
@@ -20,7 +20,7 @@ PYBRAT_SUBCMDD = path.join(PYBRAT_PROGD, "subcommands")
 PYBRAT_HACKSD = path.join(PYBRAT_PROGD, "hacks")
 
 # User's 'home' project file directory
-PYBRAT_PROJD = path.join(PYBRAT_ROOT, "home")
+PYBRAT_PROJD = path.join(environ['HOME'], ".{}".format(PYBRAT_PROG))
 
 # prettify terminal (to be ELIMINATED)
 PYBRAT_SHGREEN="\033[01;32m"

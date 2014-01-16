@@ -72,13 +72,9 @@ def set_config():
     if not 'HOME' in os.environ:
         retval = False
     else:
-#        if not isfile(PYBRAT_CMD):
-#            print "Pybrat command script not found in pythonbrew path at:"
-#            print "\t{}".format(PYBRAT_CMD)
-#            retval = False
         for p in [PYBRAT_ROOT, PYBRAT_PROJD]:
             if not exists(p):
-                print "Directory not found at: {}".format(p)
+                print "Config Error: directory not found at: {}".format(p)
                 retval = False
     return retval
 
@@ -99,7 +95,7 @@ def pv_mkfile(target, mode, data):
     try:
         cmdfile = open(target, 'wb')
     except IOError as e:
-        print "I/O error({0}): {1}".format(e.errno, e.strerror)
+        print "I/O Error({0}): {1}".format(e.errno, e.strerror)
         return False
     else:
         cmdfile.write(data)
@@ -121,7 +117,7 @@ def pv_symlink(source_file, link_name):
             try:
                 os.remove(link_name)
             except OSError as e:
-                print "OS error({0}): {1}".format(e.errno, e.strerror)
+                print "OS Error({0}): {1}".format(e.errno, e.strerror)
                 return False
     os.symlink(source_file, link_name)
     return True
