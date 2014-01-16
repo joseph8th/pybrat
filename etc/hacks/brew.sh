@@ -7,6 +7,15 @@ PYBREW_DEF_VENVD=/home/${USER}/.pythonbrew/venvs
 #[mgrs]
 PYBREW_AVAIL_MGRS="pymgr venvmgr"
 
+
+
+# initialization function
+function _init_brew {
+    OPT_IN="1"
+}
+
+
+
 # Function to configure shell configuration for pythonbrew if user wants
 function _config_shrc_brew {
 
@@ -49,13 +58,14 @@ function _check_req_brew {
     [[ "$REPLY" != "y" ]] && return
 
     # ... so curl it all to defaults
-    echo
-    curl -kL http://xrl.us/pythonbrewinstall | bash
+    echo; curl -kL http://xrl.us/pythonbrewinstall | bash
     if [ ! -e "${PYBREW_DEF_ROOTD}" ]; then
 	echo "==> ERROR: 'pythonbrew' did not install correctly."
 	_err; return
     fi
 
     _config_shrc_brew
+    _init_brew
+
     return
 }

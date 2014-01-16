@@ -2,15 +2,18 @@
 
 #set -x
 
-# required and default variables
-NOERR=0
-FIND_PATH=1
+# globals
+NOERR=0          # global number of errors logged
+FIND_PATH=1      # global used by search_path util 
+OPT_IN=0         # global code used by hacks installers
+
 
 
 # Error logging
 function _err {
     let NOERR=NOERR+1
 }
+
 
 
 # using only Python 2.7, for now ...
@@ -22,8 +25,9 @@ function _check_req_pyver {
 
     # see if virtualenv in pyenv but not set to local
     if [[ "$pyvers" == *"$PYBRAT_PROG"* ]] && [[ -e "$PYBRAT_PROG" ]]; then
-       pyenv local $PYBRAT_PROG
-       return
+        pyenv shell --unset
+        pyenv local $PYBRAT_PROG
+        return
     fi
 
     echo "==> 'pybrat' requires a 'pyenv virtualenv' with Python-${REQ_PYVER}."
@@ -50,7 +54,7 @@ function _check_req_pyver {
 # check for required dependencies - intentional no auto-install of hacks
 function _check_requirements {
 
-    # optional hacks
+    # optional hacks spec $OPT_IN
     _check_req_brew           # deprecated but maybe wanted for migration
 #    _check_req_wrap
  
@@ -67,7 +71,9 @@ function _check_requirements {
 
 function _config_shrc_pybrat {
 
-    echo; read -p "Configure 'pybrat' in your '~/.bashrc'? [y/N]: "
+    [[ "$OPT_IN" != "1"* ]] && return 
+
+    echo; read -p "Configure 'pybrat' for 'pythonbrew' in your '~/.bashrc'? [y/N]: "
     if [[ "$REPLY" != "y" ]]; then
         printf "\n==>ERROR: 'pybrat' needs to be configured to work!\n"
         _err; return
@@ -99,12 +105,12 @@ function _run_shinstall {
         _err; return
     fi
 
+    pyenv shell $PYBRAT_PROG        # switch the shell to our virtualenv
+
     # then we can install the default '~/.pybrat' dir
     if [[ "$PWD" != "$PYBRAT_DEF_ROOTD" ]]; then
 
         echo "Running 'setup.py' ..."
-        pyenv shell $PYBRAT_PROG        # switch the shell to our virtualenv
-
         # if not already in ~/.pybrat, then use setup.py to install the files
         if [ -e "./setup.py" ]; then
             python setup.py install
@@ -117,6 +123,7 @@ function _run_shinstall {
     fi
 
     # and set the local python to our virtualenv
+    pyenv shell --unset
     pyenv local $PYBRAT_PROG
 
     # then make the project links in '~/.config' (creating if not existent)
