@@ -101,25 +101,22 @@ function _run_shinstall {
 
     # then we can install the default '~/.pybrat' dir
     if [[ "$PWD" != "$PYBRAT_DEF_ROOTD" ]]; then
+
+        echo "Running 'setup.py' ..."
+        pyenv shell $PYBRAT_PROG        # switch the shell to our virtualenv
+
         # if not already in ~/.pybrat, then use setup.py to install the files
-        echo "Running setup.py ..."
         if [ -e "./setup.py" ]; then
-            python${PYBRAT_PYVER} setup.py install
+            python setup.py install
         else
             echo "==> ERROR: 'setup.py' not found."
             _err; return
         fi
-        # then change to install root dir
-        cd ${PYBRAT_DEF_ROOTD}
+
+        cd ${PYBRAT_DEF_ROOTD}          # then change to install root dir
     fi
 
-    # create a 'pyenv local' file pointing to 'pybrat' virtualenv
-    pyvers="$(pyenv versions)"
-    if [[ "$pyvers" != *"$PYBRAT_PROG"* ]]; then
-        echo "==> ERROR: '${PYBRAT_PROG}' virtualenv not found."
-        _err; return
-    fi
-
+    # and set the local python to our virtualenv
     pyenv local $PYBRAT_PROG
 
     # then make the project links in '~/.config' (creating if not existent)
