@@ -19,6 +19,7 @@ function search_path {
 # read/write INI-style config files w/sections
 # http://ajdiaz.wordpress.com/2008/02/09/bash-ini-parser/
 
+# use: cfg.parser FILENAME.cfg
 function cfg_parser {
 
     ini="$(<$1)"                # read the file
@@ -41,7 +42,7 @@ function cfg_parser {
     eval "$(echo "${ini[*]}")" # eval the result
 }
 
-
+# use: cfg.write > FILENAME.cfg
 function cfg_writer {
 
     IFS=' '$'\n'

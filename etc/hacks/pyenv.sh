@@ -72,22 +72,34 @@ function _check_req_pyenv {
     fi
 
     # good to install here ...
-    echo "==> This version of PyBrat requires 'pyenv'."
+    echo "==> This version of PyBrat requires 'pyenv' and its plugins."
     read -p "Use 'git' to clone and install 'pyenv' to defaults? [y/N]: "
     [[ "$REPLY" != "y" ]] && _err && return
-    
+
     # ... so clone it all from github
+    PYENV_URL=https://github.com/yyuu/pyenv.git
+    PYENV_VENV_URL=https://github.com/yyuu/pyenv-virtualenv.git
+    PYENV_WRAP_URL=https://github.com/yyuu/pyenv-virtualenvwrapper.git
+
     echo
-    git clone git://github.com/yyuu/pyenv.git $PYENV_DEF_ROOTD
+    git clone "$PYENV_URL" "$PYENV_DEF_ROOTD"
     if [ ! -e "$PYENV_DEF_ROOTD" ]; then
         echo "==> ERROR: 'pyenv' did not install correctly."
 	_err; return
     fi
+
     echo
-    git clone git://github.com/yyuu/pyenv-virtualenv.git ${PYENV_DEF_ROOTD}/plugins/pyenv-virtualenv
+    git clone "$PYENV_VENV_URL" "${PYENV_DEF_ROOTD}/plugins/pyenv-virtualenv"
     if [ ! -e "${PYENV_DEF_ROOTD}/plugins/pyenv-virtualenv" ]; then
         echo "==> ERROR: 'pyenv-virtualenv' did not install correctly."
 	_err; return
+    fi
+
+    echo
+    git clone "$PYENV_WRAP_URL" "${PYENV_DEF_ROOTD}/plugins/pyenv-virtualenvwrapper"
+    if [ ! -e "${PYENV_DEF_ROOTD}/plugins/pyenv-virtualenvwrapper" ]; then
+        echo "==> ERROR: 'pyenv-virtualenvwrapper' did not install correctly."
+        _err; return
     fi
 
     # config user's shell

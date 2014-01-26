@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+#***********************************#
+# Shell-only installer/bootstrapper #
+#***********************************#
+
+
 #set -x
 
 # globals
@@ -19,7 +24,7 @@ function _err {
 # using only Python 2.7, for now ...
 function _check_req_pyver {
 
-    # see if correct python version already set in pyenv
+    # see if correct virtualenv already set in pyenv
     local pyvers="$(pyenv versions)"
     [[ "$pyvers" == *"* $PYBRAT_PROG "* ]] && return
 
@@ -30,15 +35,18 @@ function _check_req_pyver {
         return
     fi
 
-    echo "==> 'pybrat' requires a 'pyenv virtualenv' with Python-${REQ_PYVER}."
-    read -p "Bootstrap Python-${REQ_PYVER} with 'pyenv'? [y/N]: " 
-    [[ "$REPLY" != "y" ]] && _err && return
+    # install required python version if not already installed
+    if [[ "$pyvers" != *"${REQ_PYVER}"* ]]; then
+        echo "==> 'pybrat' requires a 'pyenv virtualenv' with Python-${REQ_PYVER}."
+        read -p "Bootstrap Python-${REQ_PYVER} with 'pyenv'? [y/N]: " 
+        [[ "$REPLY" != "y" ]] && _err && return
 
-    # otherwise install a 'pybrat' virtualenv in ~/.pybrat
-    echo "Installing Python-${REQ_PYVER} with 'pyenv' ..."
-    pyenv install ${REQ_PYVER}
-    pyvers="$(pyenv versions)"
-    [[ "$pyvers" != *"$REQ_PYVER"* ]] && _err && return
+        # otherwise install a 'pybrat' virtualenv in ~/.pybrat
+        echo "Installing Python-${REQ_PYVER} with 'pyenv' ..."
+        pyenv install ${REQ_PYVER}
+        pyvers="$(pyenv versions)"
+        [[ "$pyvers" != *"$REQ_PYVER"* ]] && _err && return
+    fi
 
     echo "Installing virtualenv for '${PYBRAT_DEF_ROOTD}' ..."
     pyenv virtualenv "${REQ_PYVER}" "${PYBRAT_PROG}"
@@ -54,9 +62,9 @@ function _check_req_pyver {
 # check for required dependencies - intentional no auto-install of hacks
 function _check_requirements {
 
-    # optional hacks spec $OPT_IN
+    # install optional hacks
     _check_req_brew           # deprecated but maybe wanted for migration
-#    _check_req_wrap
+#    _check_req_wrap           # if 
  
    # install and config pyenv if user wants
     [[ "$NOERR" != "0" ]] && return || _check_req_pyenv
@@ -147,6 +155,7 @@ function _run_shuninstall {
     echo "Uninstalling 'pybrat' ..."
     # make sure it's installed
     if [ -e ${PYBRAT_DEF_ROOTD} ]; then
+        cd "$HOME"
         rm -rf "$PYBRAT_DEF_ROOTD"
         sudo rm "${PYBRAT_DEF_COMMANDD}/pybrat"
         echo "Done! Remove the 'pybrat' section from your '~/.bashrc' file."
@@ -171,7 +180,7 @@ function _run_shdelete {
 
 # help function
 function _run_help {
-    echo "usage: install [-h | -i | -r | -u | -d]"
+    echo "usage: manage [-h | -i | -r | -u | -d]"
     echo "See 'README.md' for more information."
 }
 
@@ -209,10 +218,6 @@ function _parse_opts {
                 ;;
         esac
     done
-
-    # otherwise spit out help
-#    _run_help
-#    exit 1
 }
 
 
@@ -221,18 +226,20 @@ function _parse_opts {
 #===========================================#
 
 OLDIFS=$IFS
+PYBRAT_CFGF=./etc/pybrat.cfg
 
 source ./etc/util.sh                # get search & cfg utils
-cfg_parser ./etc/pybrat.cfg         # parse 'pybrat.cfg'
+
+cfg_parser $PYBRAT_CFGF         # parse 'pybrat.cfg'
 cfg.section.pybrat                  # get global settings
-#cfg_parser ./etc/pybrat.cfg
 cfg.section.hacks                   # get hacks settings
 
 # get the app-spec install-config vars & functions
+
 IFS=' '
-PYMGR_ARY=( `echo ${ALLOWED_PYMGRS[@]}` )
-for hack in ${PYMGR_ARY[@]}; do
-    source "./etc/hacks/${hack}.sh"
+ALLOWED_PYMGR_ARY=( `echo ${ALLOWED_PYMGRS[@]}` )
+for pymgr in ${ALLOWED_PYMGR_ARY[@]}; do
+    source "./etc/hacks/${pymgr}.sh"
 done
 
 # split $PATH for search_path function
@@ -242,7 +249,7 @@ read DIRS <<END
 $PATH
 END
 
-# parse command line options
+# parse & run command line options
 _parse_opts $@
 
 IFS=$OLDIFS

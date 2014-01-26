@@ -6,6 +6,29 @@ import shutil
 import subprocess
 from define import *
 
+
+# Arguments handlers
+
+class Arguments(object):
+    """
+    An argument class with multi-type constructor. 
+    """
+
+    def __init__(self, args=None, arg_dict={}, arg_list=None):
+
+        if args:
+            self = args
+        elif arg_dict:
+            for key, val in arg_dict.iteritems():
+                setattr(self, key, val)
+        elif arg_list:
+            if int(len(arg_list)/2) == len(arg_list)/2:
+                for i in [2*k for k in range(int(len(arg_list)/2))]:
+                    for j in [(2*k) + 1 for k in range(int(len(arg_list)/2))]:
+                        setattr(self, arg_list[i], arg_list[j])
+
+
+
 ### general purpose funcs ###
 
 def print_err(msg, warning=False, post_exit=False):
@@ -16,6 +39,21 @@ def print_err(msg, warning=False, post_exit=False):
         exit(err_msg)
     print >> sys.stderr, err_msg
     return False
+
+
+def get_input_bool(question, default_answer=False):
+    """
+    Get user input.     """
+
+    ansstr = raw_input("\n{0}{1}".format(PYBRAT_SHGREEN, question))
+    print "{}".format(PYBRAT_SHGRAY)
+    ans = default_answer
+    if ansstr:
+        if ansstr.lower()[0] in ['y', 'Y']:
+            ans = True
+        elif ansstr.lower()[0] in ['n', 'N']:
+            ans = False
+    return ans
 
 
 
@@ -47,23 +85,6 @@ def load_module_list(pkgname, modpath):
     for name in mod_l:
         load_module(pkgname + '.' + name)
 
-
-
-### other generic funcs ###
-
-def get_input_bool(question, default_answer):
-    """
-    Get user input.     """
-
-    ansstr = raw_input("\n{0}{1}".format(PYBRAT_SHGREEN, question))
-    print "{}".format(PYBRAT_SHGRAY)
-    ans = default_answer
-    if ansstr:
-        if ansstr.lower()[0] in ['y', 'Y']:
-            ans = True
-        elif ansstr.lower()[0] in ['n', 'N']:
-            ans = False
-    return ans
         
 
 ### check if config is set ###
@@ -79,9 +100,13 @@ def set_config():
     return retval
 
 
+
 ### file/dir utils ###
 
-def pv_mkdirs(target):
+def pb_mkdirs(target):
+    """
+    Nice mkdir.     """
+
     try:
         os.makedirs(target, 0755)
     except os.error as e:
@@ -91,7 +116,10 @@ def pv_mkdirs(target):
         return True
 
 
-def pv_mkfile(target, mode, data):
+def pb_mkfile(target, mode, data):
+    """
+    Nice make and write to text file.    """
+
     try:
         cmdfile = open(target, 'wb')
     except IOError as e:
@@ -104,7 +132,10 @@ def pv_mkfile(target, mode, data):
         return True
 
 
-def pv_symlink(source_file, link_name):
+def pb_symlink(source_file, link_name):
+    """
+    Nice make a symlink.    """
+
     if not exists(source_file):
         print "Symlink Error: {} does not exist.".format(source_file)
         return False
@@ -123,197 +154,230 @@ def pv_symlink(source_file, link_name):
     return True
 
 
-def pv_check_subd(pv_subd, args={}):
-    if not exists(pv_subd):
-        return
 
-    # if integrity check...
-#    if 'all' in args:
-#        args = {'hooks':True,}
+##########################################333
+### Moving to separate files!!!!! #######33333
+#vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+
+
+class ProjectsManager(object):
+
+
+    def __init__(self, preloaded_hacks):
+        self.hacks = preloaded_hacks
+
+
+    def check_projects(self, pb_subd, args=None):
+
+        if not exists(pb_subd):
+            return
                             
-    # check if multi-venv or multi-
-    if 'vname' in args:
-        old_pyd_l = [join(pv_subd, pyd) for pyd in os.listdir(pv_subd) 
-                     if 'python' in pyd.lower() 
-                     and isdir(join(pv_subd,pyd))] 
-        if old_pyd_l:
-            print "==> WARNING: other Python(s) already linked to project."
-            prompt = "[y]: YES, purge old links and replace with '%s'.\n" \
-                     % (args['vname']) + \
-                     "[N]: NO, don't purge. Make multi-python project.\n" + \
-                     "Purge old links and replace with new one? [y/N]: "
+        # check if multi-venv or multi-
+        if hasattr(args, 'vname'):
+            old_pyd_l = [join(pb_subd, pyd) for pyd in os.listdir(pb_subd) 
+                         if 'python' in pyd.lower() 
+                         and isdir(join(pb_subd,pyd))] 
+
+            if old_pyd_l:
+                print "==> WARNING: other Python(s) already linked to project."
+                prompt = "[y]: YES, purge old links and replace with '%s'.\n" \
+                    % (args['vname']) + \
+                    "[N]: NO, don't purge. Make multi-python project.\n" + \
+                    "Purge old links and replace with new one? [y/N]: "
             
-            # if add venv to list then just return leaving .pybrat untouched
-            if not get_input_bool(prompt, default_answer=False):
-                print "\nAdding '%s' to list of venvs " % (args['vname']) + \
-                    "in '%s'..." % (args['proj'])
-            # ...else purge .pybrat subdir first then return
-            else:
-                print "\nPurging old venvs in '{}'...".format(args['proj'])
-                for pyd in old_pyd_l:
-                    shutil.rmtree(pyd, ignore_errors=True)
+                # if add venv to list then just return leaving .pybrat untouched
+                if not get_input_bool(prompt, default_answer=False):
+                    print "\nAdding '%s' to list of venvs " % (args['vname']) + \
+                        "in '%s'..." % (args['proj'])
+                # ...else purge .pybrat subdir first then return
+                else:
+                    print "\nPurging old venvs in '{}'...".format(args['proj'])
+                    for pyd in old_pyd_l:
+                        shutil.rmtree(pyd, ignore_errors=True)
 
 
-def pv_add_proj(proj_dir):
-    proj_name = basename(proj_dir)
-    # check if project/.pybrat subdir 'etc' (non-venv) reqs are OK
-    pv_check_subd(join(proj_dir, ".{}".format(PYBRAT_PROG)), args={'hooks':True})
-    # link to project dir in .pybrat_projects/project
-    if not pv_symlink(proj_dir, join(PYBRAT_PROJD, proj_name)):
-        return False
-    print "Linked:\t" + join(PYBRAT_PROJD, proj_name) + "\n\t--> " + proj_dir
-    return True
+    def add_project(self, proj_dir):
 
+        proj_name = basename(proj_dir)
 
-def pv_link_projs(venv_dir, proj_dir):
-    proj_name = basename(proj_dir)
-    venv_name = basename(venv_dir['vpath'])
-    # what to do if .pybrat subdir already has venv(s)?
-    pv_subd = join( proj_dir, ".{}".format(PYBRAT_PROG) ) 
-    pv_check_subd(pv_subd, {'proj':proj_name, 'vname':venv_name})
-    # duplicate pythonbrew Python-X.Y.Z directory structure
-    pv_py_subd = join( pv_subd, "Python-{}".format(venv_dir['python']), )
-    # create .pybrat hidden subdir in project dir
-    if not pv_mkdirs(pv_py_subd):
-        return print_err("directory(s) not created", warning=True)
-    # link to pythonbrew Python-X.Y.Z dirs in .pybrat subdir
-    if not pv_symlink(venv_dir['vpath'], join(pv_py_subd, venv_name)):
-        return print_err("venv not linked to project", warning=True)
-    print "Linked:\t" + pv_py_subd +"/"+ venv_name + "\n\t--> " + venv_dir['vpath']
-    return True
+        # check if project/.pybrat subdir 'etc' (non-venv) reqs are OK
+        self.check_projects(join(proj_dir, ".{}".format(PYBRAT_PROG)), args={'hooks':True})
+
+        # link to project dir in .pybrat_projects/project
+        if not pb_symlink(proj_dir, join(PYBRAT_PROJD, proj_name)):
+            return False
+        print "Linked:\t" + join(PYBRAT_PROJD, proj_name) + "\n\t--> " + proj_dir
+
+        return True
 
 
 
-### general purpose proj/venv utils ###
+    def link_projs(self, venv_dir, proj_dir):
+
+        proj_name = basename(proj_dir)
+        venv_name = basename(venv_dir['vpath'])
+
+        # what to do if .pybrat subdir already has venv(s)?
+        pb_subd = join( proj_dir, ".{}".format(PYBRAT_PROG) ) 
+        self.check_projects(pb_subd, {'proj':proj_name, 'vname':venv_name})
+
+        # duplicate pythonbrew Python-X.Y.Z directory structure
+        pb_py_subd = join( pb_subd, "Python-{}".format(venv_dir['python']), )
+
+        # create .pybrat hidden subdir in project dir
+        if not pb_mkdirs(pb_py_subd):
+            return print_err("directory(s) not created", warning=True)
+
+        # link to pythonbrew Python-X.Y.Z dirs in .pybrat subdir
+        if not pb_symlink(venv_dir['vpath'], join(pb_py_subd, venv_name)):
+            return print_err("venv not linked to project", warning=True)
+        print "Linked:\t" + pb_py_subd +"/"+ venv_name + "\n\t--> " + venv_dir['vpath']
+        return True
+    
+    
+
+    ###### HACKS ###### MOVING to respective hacks
+    
+    #def _get_pyenv_venv_list():
+    #    venv_d = {}
+    #    for python in os.listdir(PYBRAT_PYENV_VENVD):
+    #        for vname in os.listdir(join(PYBRAT_PYENV_VENVD, python)):
 
 
-#def _get_pyenv_venv_list():
-#    venv_d = {}
-#    for python in os.listdir(PYBRAT_PYENV_VENVD):
-#        for vname in os.listdir(join(PYBRAT_PYENV_VENVD, python)):
+    def _get_venvs_brew(self):
+        venv_d = {}
+        for python in os.listdir(PYBRAT_PYBREW_VENVD):
+            for vname in os.listdir(join(PYBRAT_PYBREW_VENVD, python)):
+                venv_d[vname] = {'vpath':join(PYBRAT_PYBREW_VENVD, 
+                                              python, vname),
+                                 'python':python.lower().strip('python-')}
+        return { 'brew': {'abspath': PYBRAT_PYBREW_VENVD, 'venv':venv_d}, }
 
 
-def _get_pybrew_venv_list():
-    venv_d = {}
-    for python in os.listdir(PYBRAT_PYBREW_VENVD):
-        for vname in os.listdir(join(PYBRAT_PYBREW_VENVD, python)):
-            venv_d[vname] = {'vpath':join(PYBRAT_PYBREW_VENVD, 
-                                          python, vname),
-                             'python':python.lower().strip('python-')}
-    return { 'brew': {'abspath': PYBRAT_PYBREW_VENVD, 'venv':venv_d}, }
+    def _get_venvs_wrap(self):
+        venv_d = {}
+        vw_venv_l = [p for p in os.listdir(PYBRAT_VWRAP_ROOTD) 
+                     if isdir(join(PYBRAT_VWRAP_ROOTD, p))]
+        for vname in vw_venv_l:
+            vpath = join(PYBRAT_VWRAP_ROOTD, vname)
+            if exists(join(vpath, "include")):
+                for python in os.listdir(join(vpath, "include")):
+                    if 'python' in python.lower():
+                        venv_d[vname] = {'vpath':vpath,
+                                         'python':python.lower().strip('python-')}
+        return { 'wrap': {'abspath': PYBRAT_VWRAP_ROOTD, 'venv':venv_d}, }
 
 
-
-def _get_vwrap_venv_list():
-    venv_d = {}
-    vw_venv_l = [p for p in os.listdir(PYBRAT_VWRAP_ROOTD) 
-                 if isdir(join(PYBRAT_VWRAP_ROOTD, p))]
-    for vname in vw_venv_l:
-        vpath = join(PYBRAT_VWRAP_ROOTD, vname)
-        if exists(join(vpath, "include")):
-            for python in os.listdir(join(vpath, "include")):
-                if 'python' in python.lower():
-                    venv_d[vname] = {'vpath':vpath,
-                                     'python':python.lower().strip('python-')}
-    return { 'wrap': {'abspath': PYBRAT_VWRAP_ROOTD, 'venv':venv_d}, }
-
-
-
-def _get_wild_venv_list(sroot):
-    venv_d = {}
-    spath = abspath(sroot)
-    if not exists(spath):
-        return venv_d
-    for root, dirs, files in os.walk(spath):
-        subd_d = {}
-        for subd in dirs:
-            if subd in ['include', 'lib', 'bin']:
-                subd_d[subd] = join(root, subd)
-        if len(subd_d) == 3:
-            py_l = [py.lower().strip('python-') for py in os.listdir(subd_d['include'])
-                    if 'python' in py.lower()]
-            for python in py_l:
-                vname = basename(root)
-                venv_d[vname] = {'vpath':root, 'python':python,}
-    return { 'venv': {'abspath':spath, 'venv':venv_d,}, }
+    def _get_venvs_wild(self, sroot):
+        venv_d = {}
+        spath = abspath(sroot)
+        if not exists(spath):
+            return venv_d
+        for root, dirs, files in os.walk(spath):
+            subd_d = {}
+            for subd in dirs:
+                if subd in ['include', 'lib', 'bin']:
+                    subd_d[subd] = join(root, subd)
+            if len(subd_d) == 3:
+                py_l = [py.lower().strip('python-') for py in os.listdir(subd_d['include'])
+                        if 'python' in py.lower()]
+                for python in py_l:
+                    vname = basename(root)
+                    venv_d[vname] = {'vpath':root, 'python':python,}
+        return { 'venv': {'abspath':spath, 'venv':venv_d,}, }
 
 
-
-def _get_pybrat_proj_list():
-    proj_d = {}
+    def _get_pybrat_projects(self):
+        proj_d = {}
  
-   # get each source dir linked to in .pybrat_projects/*
-    for project in sorted(os.listdir(PYBRAT_PROJD)):
+        # get each source dir linked to in .pybrat_projects/*
+        for project in sorted(os.listdir(PYBRAT_PROJD)):
 
-        # pybrat ln to proj
-        proj_ln = join(PYBRAT_PROJD, project)
-        if not islink(proj_ln):
-            continue
+            # pybrat ln to proj
+            proj_ln = join(PYBRAT_PROJD, project)
+            if not islink(proj_ln):
+                continue
 
-        # orig user proj path
-        proj_srcd = os.readlink(proj_ln)
+            # orig user proj path
+            proj_srcd = os.readlink(proj_ln)
 
-        # project/.pybrat dir 
-        proj_pvd = join(proj_srcd, ".{}".format(PYBRAT_PROG))
+            # project/.pybrat dir 
+            proj_pvd = join(proj_srcd, ".{}".format(PYBRAT_PROG))
 
-        # check if .pybrat subdir exists in source dir
-        if not exists(proj_pvd):
-            proj_venv_d = {'*': {'vpath':"*", 'python':"*"},}
-            if not exists(proj_srcd):
-                proj_srcd = "*"
-        else:
-            proj_pyver_l = [ py.lower().strip('python-') 
-                             for py in os.listdir(proj_pvd) 
-                             if 'python' in py.lower() ]
-
-            # check if python subdir(s) exists in .pybrat/
-            if not proj_pyver_l:
+            # check if .pybrat subdir exists in source dir
+            if not exists(proj_pvd):
                 proj_venv_d = {'*': {'vpath':"*", 'python':"*"},}
+                if not exists(proj_srcd):
+                    proj_srcd = "*"
             else:
-                proj_venv_d = {}
+                proj_pyver_l = [ py.lower().strip('python-') 
+                                 for py in os.listdir(proj_pvd) 
+                                 if 'python' in py.lower() ]
 
-                for python in proj_pyver_l:
-                    pyd = join(proj_pvd, "Python-{}".format(python))
-                    venv_l = [ venv for venv in os.listdir(pyd) 
-                               if islink(join(pyd, venv)) ]
+                # check if python subdir(s) exists in .pybrat/
+                if not proj_pyver_l:
+                    proj_venv_d = {'*': {'vpath':"*", 'python':"*"},}
+                else:
+                    proj_venv_d = {}
 
-                    # check if venv subdir link(s) exists in .pybrat/Python-*
-                    if venv_l:
-                        for vname in venv_l:
+                    for python in proj_pyver_l:
+                        pyd = join(proj_pvd, "Python-{}".format(python))
+                        venv_l = [ venv for venv in os.listdir(pyd) 
+                                   if islink(join(pyd, venv)) ]
 
-                            # check if link resolves to real source dir
-                            vpath = os.readlink(join(pyd, vname))
-                            if not exists(vpath):
-                                vname = "*"
-                                vpath = "*"
+                        # check if venv subdir link(s) exists in .pybrat/Python-*
+                        if venv_l:
+                            for vname in venv_l:
 
-                            # got vals for every key? add to proj venv dict
-                            proj_venv_d[vname] = {'vpath':vpath,
-                                                  'python':python,}
+                                # check if link resolves to real source dir
+                                vpath = os.readlink(join(pyd, vname))
+                                if not exists(vpath):
+                                    vname = "*"
+                                    vpath = "*"
+
+                                # got vals for every key? add to proj venv dict
+                                proj_venv_d[vname] = {'vpath':vpath,
+                                                      'python':python,}
 
         # everything OK per project? then set project dict entry
-        if proj_venv_d:
-            proj_d[project] = { 'abspath': proj_ln,
-                                'srcpath': proj_srcd, 
-                                'venv':proj_venv_d, }
+            if proj_venv_d:
+                proj_d[project] = { 'abspath': proj_ln,
+                                    'srcpath': proj_srcd, 
+                                    'venv':proj_venv_d, }
 
-    # return the result
-    return proj_d
+        # return the result
+        return proj_d
 
 
 
-def get_project_list(args):
+    def get_list_dict(self, args):
+
+        # list only known virtualenvs
+        if args.venv:
+
+
+        # list all known pythons
+        if args.py:
+            return self._get_projects_dict(filter_by='py')
+
+        # list filtered by keyword on all dict keys & vals
+#        if args.filter:
+#            return self._get_projects_dict(filter_by=args.filter)
+
+        # list everything
+        return self._get_projects_dict()
+
     # list pythonbrew venv project directories and pythons
-    if 'brew' in args and args['brew']:
-        return _get_pybrew_venv_list()
+#    if 'brew' in args and args['brew']:
+#        return self._get_venvs_brew()
     # list virtualenvwrapper's ~/.virtualenvs projects if they exist
-    elif 'wrap' in args and args['wrap']:
-        return _get_vwrap_venv_list()
-    elif 'venv' in args and args['venv']:
-        return _get_wild_venv_list(args['venv'])
+#    elif 'wrap' in args and args['wrap']:
+#        return self._get_venvs_wrap()
+#    elif 'venv' in args and args['venv']:
+#        return self._get_venvs_wild(args['venv'])
     # DEFAULT: list pybrat projects in .pybrat_projects/*
-    else:
-        return _get_pybrat_proj_list()
+#    else:
+#        return self._get_pybrat_projects()
 
 
 
@@ -348,7 +412,7 @@ def get_venv(args):
 
 ### functions that run shell commands in subprocesses ###
 
-def pv_run_processes(exelist=None, envdict=None, shell=True, bash=False):
+def pb_run_processes(exelist=None, envdict=None, shell=True, bash=False):
     # change environ of subprocess if nec.
     env = os.environ.copy()
     if envdict:
@@ -389,7 +453,7 @@ def pv_run_processes(exelist=None, envdict=None, shell=True, bash=False):
     return True
 
 
-def pv_check_python(python):
+def pb_check_python(python):
 
     print "Looking for Python-%s ..." % python
 
@@ -421,7 +485,7 @@ def pv_check_python(python):
 
     print "This might take a while. Please try to be patient..."
 
-    if not pv_run_processes([['pythonbrew', 'install', python],]):
+    if not pb_run_processes([['pythonbrew', 'install', python],]):
         print "ERROR: pythonbrew subprocess(es) failed."
         return False
 
@@ -429,7 +493,7 @@ def pv_check_python(python):
 
 
 
-def pv_mkvenv(vname, python, venv, site=False):
+def pb_mkvenv(vname, python, venv, site=False):
     """ 
     Function to create virtualenv(s) using given 'venv' method.
     """
@@ -441,7 +505,7 @@ def pv_mkvenv(vname, python, venv, site=False):
         print "Error: target pythonbrew 'Python-%s' is not installed." \
             % (python)
 
-        if not pv_check_python(python):
+        if not pb_check_python(python):
             return None
 
     # construct the pythonbrew command now before the logic following...
@@ -463,7 +527,7 @@ def pv_mkvenv(vname, python, venv, site=False):
             return None
 
     # otherwise create the venv with pythonbrew
-    elif not pv_run_processes( [proc_l,] ):
+    elif not pb_run_processes( [proc_l,] ):
         print "Error: pythonbrew subprocess(es) failed."
         return None
 
@@ -484,22 +548,22 @@ def pb_rmvenv(vname, proj_dir=None):
         return False
     python = venv_d[vname]['python']
     # use pybrew to delete the venv
-    if not pv_run_processes(
+    if not pb_run_processes(
             [['pythonbrew', 'venv', 'delete', vname, '-p', python],]):
         print "Error: pythonbrew subprocess(es) failed."
         return False
     # clean up if linked to a project...
     if proj_dir:
-        pv_pyd = join(proj_dir, ".{}".format(PYBRAT_PROG), 
+        pb_pyd = join(proj_dir, ".{}".format(PYBRAT_PROG), 
                       "Python-{}".format(python))
-        os.remove(join(pv_pyd, vname))
-        if not os.listdir(pv_pyd):
-            os.rmdir(pv_pyd)
+        os.remove(join(pb_pyd, vname))
+        if not os.listdir(pb_pyd):
+            os.rmdir(pb_pyd)
     # all done...
     return True
 
 
-def pv_rmvenv(proj_dir):
+def pb_rmvenv(proj_dir):
     proj = basename(proj_dir)
     proj_d = get_project_list({'pybrat':True,})
     # rm pybrew venv(s)

@@ -57,7 +57,7 @@ Usage
 Commands
 --------
 
-    {ls,init,mk,rm,use}
+    {ls,init,mk,rm,use,fix,sync}
 
     ls      List all pybrat projects, virtualenvs or pythons.
 
